@@ -3,6 +3,16 @@ import {
   SHOPIFY_GRAPHQL_API_ENDPOINT,
   TAGS,
 } from "lib/constants";
+import {
+  NAV_MENU,
+  FOOTER_MENU,
+  getLocalCollection,
+  getLocalCollectionProducts,
+  getLocalCollections,
+  getLocalProduct,
+  getLocalProducts,
+  getLocalRecommendations,
+} from "lib/data/catalog";
 import { isShopifyError } from "lib/type-guards";
 import { ensureStartsWith } from "lib/utils";
 import {
@@ -39,6 +49,10 @@ import {
   Menu,
   Page,
   Product,
+  ProductMeta,
+  ProductReview,
+  ShopifyMetafield,
+  Spec,
   ShopifyAddToCartOperation,
   ShopifyCart,
   ShopifyCartOperation,
@@ -126,6 +140,20 @@ const removeEdgesAndNodes = <T>(array: Connection<T>): T[] => {
   return array.edges.map((edge) => edge?.node);
 };
 
+// Used only in local/demo mode (no Shopify configured) so cart mutations don't
+// throw. In production (env vars set) the real Shopify cart is used throughout.
+const localDemoCart = (): Cart => ({
+  id: "demo-cart",
+  checkoutUrl: "",
+  totalQuantity: 0,
+  lines: [],
+  cost: {
+    subtotalAmount: { amount: "0.0", currencyCode: "USD" },
+    totalAmount: { amount: "0.0", currencyCode: "USD" },
+    totalTaxAmount: { amount: "0.0", currencyCode: "USD" },
+  },
+});
+
 const reshapeCart = (cart: ShopifyCart): Cart => {
   if (!cart.cost?.totalTaxAmount) {
     cart.cost.totalTaxAmount = {
@@ -141,7 +169,7 @@ const reshapeCart = (cart: ShopifyCart): Cart => {
 };
 
 const reshapeCollection = (
-  collection: ShopifyCollection
+  collection: ShopifyCollection,
 ): Collection | undefined => {
   if (!collection) {
     return undefined;
@@ -181,9 +209,100 @@ const reshapeImages = (images: Connection<Image>, productTitle: string) => {
   });
 };
 
+const metafieldText = (mf: ShopifyMetafield | undefined): string | undefined =>
+  mf?.value?.trim() ? mf.value : undefined;
+
+const metafieldNumber = (
+  mf: ShopifyMetafield | undefined,
+): number | undefined => {
+  const v = metafieldText(mf);
+  if (v === undefined) return undefined;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
+};
+
+const metafieldJSON = <T>(mf: ShopifyMetafield | undefined): T | undefined => {
+  const v = metafieldText(mf);
+  if (v === undefined) return undefined;
+  try {
+    return JSON.parse(v) as T;
+  } catch {
+    return undefined;
+  }
+};
+
+const metafieldMoney = (mf: ShopifyMetafield | undefined) => {
+  const v = metafieldText(mf);
+  if (v === undefined) return undefined;
+  // Shopify `money` metafields serialize as {"amount":"9800.0","currency_code":"USD"}
+  try {
+    const parsed = JSON.parse(v) as {
+      amount?: string | number;
+      currency_code?: string;
+      currencyCode?: string;
+    };
+    if (parsed?.amount !== undefined) {
+      return {
+        amount: String(parsed.amount),
+        currencyCode: parsed.currency_code || parsed.currencyCode || "USD",
+      };
+    }
+  } catch {
+    // Fall through: treat as a bare number string.
+  }
+  const n = Number(v);
+  return Number.isFinite(n)
+    ? { amount: String(n), currencyCode: "USD" }
+    : undefined;
+};
+
+// Builds the furniture-specific `meta` block from Shopify "custom" metafields.
+const reshapeProductMetafields = (
+  product: ShopifyProduct,
+): ProductMeta | undefined => {
+  const reviews = metafieldJSON<ProductReview[]>(product.metaReviews);
+  let rating = metafieldNumber(product.metaRating);
+  let reviewCount = metafieldNumber(product.metaReviewCount);
+
+  if (reviews?.length) {
+    if (rating === undefined) {
+      rating = Number(
+        (
+          reviews.reduce((s, r) => s + (r.rating || 0), 0) / reviews.length
+        ).toFixed(1),
+      );
+    }
+    if (reviewCount === undefined) reviewCount = reviews.length;
+  }
+
+  const meta: ProductMeta = {
+    tagline: metafieldText(product.metaTagline),
+    comparableAt: metafieldMoney(product.metaComparableAt),
+    comparableTo: metafieldText(product.metaComparableTo),
+    category: metafieldText(product.metaCategory),
+    sourcingStory: metafieldText(product.metaSourcingStory),
+    designStory: metafieldText(product.metaDesignStory),
+    care: metafieldText(product.metaCare),
+    leadTime: metafieldText(product.metaLeadTime),
+    features: metafieldJSON<string[]>(product.metaFeatures),
+    craftNotes: metafieldJSON<string[]>(product.metaCraftNotes),
+    materials: metafieldJSON<Spec[]>(product.metaMaterials),
+    dimensions: metafieldJSON<Spec[]>(product.metaDimensions),
+    reviews,
+    rating,
+    reviewCount,
+  };
+
+  // If no metafields were set, return undefined so the PDP renders cleanly.
+  const hasContent = Object.values(meta).some(
+    (v) => v !== undefined && !(Array.isArray(v) && v.length === 0),
+  );
+  return hasContent ? meta : undefined;
+};
+
 const reshapeProduct = (
   product: ShopifyProduct,
-  filterHiddenProducts: boolean = true
+  filterHiddenProducts: boolean = true,
 ) => {
   if (
     !product ||
@@ -192,12 +311,32 @@ const reshapeProduct = (
     return undefined;
   }
 
-  const { images, variants, ...rest } = product;
+  const {
+    images,
+    variants,
+    metaTagline,
+    metaComparableAt,
+    metaComparableTo,
+    metaCategory,
+    metaSourcingStory,
+    metaDesignStory,
+    metaCraftNotes,
+    metaFeatures,
+    metaMaterials,
+    metaDimensions,
+    metaCare,
+    metaLeadTime,
+    metaRating,
+    metaReviewCount,
+    metaReviews,
+    ...rest
+  } = product;
 
   return {
     ...rest,
     images: reshapeImages(images, product.title),
     variants: removeEdgesAndNodes(variants),
+    meta: reshapeProductMetafields(product),
   };
 };
 
@@ -218,6 +357,8 @@ const reshapeProducts = (products: ShopifyProduct[]) => {
 };
 
 export async function createCart(): Promise<Cart> {
+  if (!endpoint) return localDemoCart();
+
   const res = await shopifyFetch<ShopifyCreateCartOperation>({
     query: createCartMutation,
   });
@@ -226,8 +367,10 @@ export async function createCart(): Promise<Cart> {
 }
 
 export async function addToCart(
-  lines: { merchandiseId: string; quantity: number }[]
+  lines: { merchandiseId: string; quantity: number }[],
 ): Promise<Cart> {
+  if (!endpoint) return localDemoCart();
+
   const cartId = (await cookies()).get("cartId")?.value!;
   const res = await shopifyFetch<ShopifyAddToCartOperation>({
     query: addToCartMutation,
@@ -240,6 +383,8 @@ export async function addToCart(
 }
 
 export async function removeFromCart(lineIds: string[]): Promise<Cart> {
+  if (!endpoint) return localDemoCart();
+
   const cartId = (await cookies()).get("cartId")?.value!;
   const res = await shopifyFetch<ShopifyRemoveFromCartOperation>({
     query: removeFromCartMutation,
@@ -253,8 +398,10 @@ export async function removeFromCart(lineIds: string[]): Promise<Cart> {
 }
 
 export async function updateCart(
-  lines: { id: string; merchandiseId: string; quantity: number }[]
+  lines: { id: string; merchandiseId: string; quantity: number }[],
 ): Promise<Cart> {
+  if (!endpoint) return localDemoCart();
+
   const cartId = (await cookies()).get("cartId")?.value!;
   const res = await shopifyFetch<ShopifyUpdateCartOperation>({
     query: editCartItemsMutation,
@@ -271,6 +418,10 @@ export async function getCart(): Promise<Cart | undefined> {
   "use cache: private";
   cacheTag(TAGS.cart);
   cacheLife("seconds");
+
+  if (!endpoint) {
+    return undefined;
+  }
 
   const cartId = (await cookies()).get("cartId")?.value;
 
@@ -292,11 +443,15 @@ export async function getCart(): Promise<Cart | undefined> {
 }
 
 export async function getCollection(
-  handle: string
+  handle: string,
 ): Promise<Collection | undefined> {
   "use cache";
   cacheTag(TAGS.collections);
   cacheLife("days");
+
+  if (!endpoint) {
+    return getLocalCollection(handle);
+  }
 
   const res = await shopifyFetch<ShopifyCollectionOperation>({
     query: getCollectionQuery,
@@ -322,10 +477,7 @@ export async function getCollectionProducts({
   cacheLife("days");
 
   if (!endpoint) {
-    console.log(
-      `Skipping getCollectionProducts for '${collection}' - Shopify not configured`
-    );
-    return [];
+    return getLocalCollectionProducts({ collection, sortKey, reverse });
   }
 
   const res = await shopifyFetch<ShopifyCollectionProductsOperation>({
@@ -343,7 +495,7 @@ export async function getCollectionProducts({
   }
 
   return reshapeProducts(
-    removeEdgesAndNodes(res.body.data.collection.products)
+    removeEdgesAndNodes(res.body.data.collection.products),
   );
 }
 
@@ -353,7 +505,6 @@ export async function getCollections(): Promise<Collection[]> {
   cacheLife("days");
 
   if (!endpoint) {
-    console.log("Skipping getCollections - Shopify not configured");
     return [
       {
         handle: "",
@@ -366,6 +517,7 @@ export async function getCollections(): Promise<Collection[]> {
         path: "/search",
         updatedAt: new Date().toISOString(),
       },
+      ...getLocalCollections(),
     ];
   }
 
@@ -388,7 +540,7 @@ export async function getCollections(): Promise<Collection[]> {
     // Filter out the `hidden` collections.
     // Collections that start with `hidden-*` need to be hidden on the search page.
     ...reshapeCollections(shopifyCollections).filter(
-      (collection) => !collection.handle.startsWith("hidden")
+      (collection) => !collection.handle.startsWith("hidden"),
     ),
   ];
 
@@ -401,8 +553,7 @@ export async function getMenu(handle: string): Promise<Menu[]> {
   cacheLife("days");
 
   if (!endpoint) {
-    console.log(`Skipping getMenu for '${handle}' - Shopify not configured`);
-    return [];
+    return handle.includes("footer") ? FOOTER_MENU : NAV_MENU;
   }
 
   const res = await shopifyFetch<ShopifyMenuOperation>({
@@ -423,7 +574,11 @@ export async function getMenu(handle: string): Promise<Menu[]> {
   );
 }
 
-export async function getPage(handle: string): Promise<Page> {
+export async function getPage(handle: string): Promise<Page | undefined> {
+  if (!endpoint) {
+    return undefined;
+  }
+
   const res = await shopifyFetch<ShopifyPageOperation>({
     query: getPageQuery,
     variables: { handle },
@@ -433,6 +588,10 @@ export async function getPage(handle: string): Promise<Page> {
 }
 
 export async function getPages(): Promise<Page[]> {
+  if (!endpoint) {
+    return [];
+  }
+
   const res = await shopifyFetch<ShopifyPagesOperation>({
     query: getPagesQuery,
   });
@@ -446,8 +605,7 @@ export async function getProduct(handle: string): Promise<Product | undefined> {
   cacheLife("days");
 
   if (!endpoint) {
-    console.log(`Skipping getProduct for '${handle}' - Shopify not configured`);
-    return undefined;
+    return getLocalProduct(handle);
   }
 
   const res = await shopifyFetch<ShopifyProductOperation>({
@@ -461,11 +619,17 @@ export async function getProduct(handle: string): Promise<Product | undefined> {
 }
 
 export async function getProductRecommendations(
-  productId: string
+  productId: string,
 ): Promise<Product[]> {
   "use cache";
   cacheTag(TAGS.products);
   cacheLife("days");
+
+  if (!endpoint) {
+    // productId is our gid form: gid://maison-noyer/Product/<handle>
+    const handle = productId.split("/").pop() ?? "";
+    return getLocalRecommendations(handle);
+  }
 
   const res = await shopifyFetch<ShopifyProductRecommendationsOperation>({
     query: getProductRecommendationsQuery,
@@ -489,6 +653,10 @@ export async function getProducts({
   "use cache";
   cacheTag(TAGS.products);
   cacheLife("days");
+
+  if (!endpoint) {
+    return getLocalProducts({ query, sortKey, reverse });
+  }
 
   const res = await shopifyFetch<ShopifyProductsOperation>({
     query: getProductsQuery,

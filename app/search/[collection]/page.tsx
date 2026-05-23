@@ -2,9 +2,12 @@ import { getCollection, getCollectionProducts } from "lib/shopify";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import Grid from "components/grid";
 import ProductGridItems from "components/layout/product-grid-items";
+import { CollectionPills } from "components/layout/search/collection-pills";
+import { SortDropdown } from "components/layout/search/sort-dropdown";
 import { defaultSort, sorting } from "lib/constants";
+import { collectionHero } from "lib/data/catalog";
+import Image from "next/image";
 
 export async function generateMetadata(props: {
   params: Promise<{ collection: string }>;
@@ -32,21 +35,65 @@ export default async function CategoryPage(props: {
   const { sort } = searchParams as { [key: string]: string };
   const { sortKey, reverse } =
     sorting.find((item) => item.slug === sort) || defaultSort;
+  const collection = await getCollection(params.collection);
   const products = await getCollectionProducts({
     collection: params.collection,
     sortKey,
     reverse,
   });
 
+  const heroImage = collectionHero[params.collection];
+
   return (
     <section>
-      {products.length === 0 ? (
-        <p className="py-3 text-lg">{`No products found in this collection`}</p>
-      ) : (
-        <Grid className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          <ProductGridItems products={products} />
-        </Grid>
-      )}
+      {/* Collection hero */}
+      <div className="relative flex h-[40vh] min-h-[300px] w-full items-end overflow-hidden bg-espresso">
+        {heroImage ? (
+          <Image
+            src={heroImage}
+            alt={collection?.title ?? params.collection}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+          />
+        ) : null}
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/70 to-ink/10" />
+        <div className="relative mx-auto w-full max-w-[1400px] px-4 pb-10 lg:px-8">
+          <h1 className="font-serif text-4xl text-bone md:text-6xl">
+            {collection?.title ?? params.collection}
+          </h1>
+          {collection?.description ? (
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-bone/80 md:text-base">
+              {collection.description}
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="mx-auto max-w-[1400px] px-4 pt-10 lg:px-8">
+        <CollectionPills active={params.collection} />
+        <div className="mt-6 flex items-center justify-between border-b border-sand pb-4">
+          <p className="text-xs uppercase tracking-[0.15em] text-clay">
+            {products.length} {products.length === 1 ? "piece" : "pieces"}
+          </p>
+          <SortDropdown />
+        </div>
+      </div>
+
+      {/* Grid */}
+      <div className="mx-auto max-w-[1400px] px-4 py-12 lg:px-8">
+        {products.length === 0 ? (
+          <p className="py-16 text-center text-walnut">
+            No pieces found in this collection yet.
+          </p>
+        ) : (
+          <ul className="grid grid-cols-1 gap-x-8 gap-y-16 sm:grid-cols-2 lg:gap-x-10">
+            <ProductGridItems products={products} />
+          </ul>
+        )}
+      </div>
     </section>
   );
 }

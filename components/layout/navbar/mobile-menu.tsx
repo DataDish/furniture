@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Fragment, Suspense, useEffect, useState } from "react";
 
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Wordmark } from "components/wordmark";
 import { Menu } from "lib/shopify/types";
 import Search, { SearchSkeleton } from "./search";
 
@@ -34,10 +35,10 @@ export default function MobileMenu({ menu }: { menu: Menu[] }) {
     <>
       <button
         onClick={openMobileMenu}
-        aria-label="Open mobile menu"
-        className="flex h-11 w-11 items-center justify-center rounded-md border border-neutral-200 text-black transition-colors md:hidden dark:border-neutral-700 dark:text-white"
+        aria-label="Open menu"
+        className="flex h-10 w-10 items-center justify-center text-ink transition-colors md:hidden"
       >
-        <Bars3Icon className="h-4" />
+        <Bars3Icon strokeWidth={1.25} className="h-6" />
       </button>
       <Transition show={isOpen}>
         <Dialog onClose={closeMobileMenu} className="relative z-50">
@@ -50,7 +51,7 @@ export default function MobileMenu({ menu }: { menu: Menu[] }) {
             leaveFrom="opacity-100 backdrop-blur-[.5px]"
             leaveTo="opacity-0 backdrop-blur-none"
           >
-            <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+            <div className="fixed inset-0 bg-ink/40" aria-hidden="true" />
           </Transition.Child>
           <Transition.Child
             as={Fragment}
@@ -61,17 +62,20 @@ export default function MobileMenu({ menu }: { menu: Menu[] }) {
             leaveFrom="translate-x-0"
             leaveTo="translate-x-[-100%]"
           >
-            <Dialog.Panel className="fixed bottom-0 left-0 right-0 top-0 flex h-full w-full flex-col bg-white pb-6 dark:bg-black">
-              <div className="p-4">
+            <Dialog.Panel className="fixed bottom-0 left-0 top-0 flex h-full w-full max-w-sm flex-col bg-bone pb-6 text-ink">
+              <div className="flex items-center justify-between border-b border-sand p-5">
+                <Wordmark subtitle={false} />
                 <button
-                  className="mb-4 flex h-11 w-11 items-center justify-center rounded-md border border-neutral-200 text-black transition-colors dark:border-neutral-700 dark:text-white"
+                  className="flex h-10 w-10 items-center justify-center text-ink"
                   onClick={closeMobileMenu}
-                  aria-label="Close mobile menu"
+                  aria-label="Close menu"
                 >
-                  <XMarkIcon className="h-6" />
+                  <XMarkIcon strokeWidth={1.25} className="h-6" />
                 </button>
+              </div>
 
-                <div className="mb-4 w-full">
+              <div className="p-5">
+                <div className="mb-8 w-full">
                   <Suspense fallback={<SearchSkeleton />}>
                     <Search />
                   </Suspense>
@@ -80,7 +84,7 @@ export default function MobileMenu({ menu }: { menu: Menu[] }) {
                   <ul className="flex w-full flex-col">
                     {menu.map((item: Menu) => (
                       <li
-                        className="py-2 text-xl text-black transition-colors hover:text-neutral-500 dark:text-white"
+                        className="border-b border-sand/60 py-4 font-serif text-2xl text-ink transition-colors hover:text-clay"
                         key={item.title}
                       >
                         <Link

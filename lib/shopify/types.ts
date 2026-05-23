@@ -71,6 +71,42 @@ export type Page = {
 export type Product = Omit<ShopifyProduct, "variants" | "images"> & {
   variants: ProductVariant[];
   images: Image[];
+  meta?: ProductMeta;
+};
+
+export type Spec = { label: string; value: string };
+
+export type ProductReview = {
+  author: string;
+  location: string;
+  rating: number;
+  date: string;
+  title: string;
+  body: string;
+  verified?: boolean;
+};
+
+export type ProductMeta = {
+  /** Short marketing line shown under the title */
+  tagline?: string;
+  /** Anchor price representing the comparable gallery/market piece */
+  comparableAt?: Money;
+  /** Discreet reference to the design lineage (no brand names) */
+  comparableTo?: string;
+  /** The collection / category this product belongs to */
+  category?: string;
+  materials?: Spec[];
+  dimensions?: Spec[];
+  features?: string[];
+  /** The story of how we source it for less without compromising quality */
+  sourcingStory?: string;
+  designStory?: string;
+  craftNotes?: string[];
+  care?: string;
+  leadTime?: string;
+  rating?: number;
+  reviewCount?: number;
+  reviews?: ProductReview[];
 };
 
 export type ProductOption = {
@@ -115,6 +151,11 @@ export type ShopifyCollection = {
   updatedAt: string;
 };
 
+export type ShopifyMetafield = {
+  value: string;
+  type: string;
+} | null;
+
 export type ShopifyProduct = {
   id: string;
   handle: string;
@@ -133,6 +174,22 @@ export type ShopifyProduct = {
   seo: SEO;
   tags: string[];
   updatedAt: string;
+  // Aliased product metafields (Shopify "custom" namespace) used as the PDP CMS.
+  metaTagline?: ShopifyMetafield;
+  metaComparableAt?: ShopifyMetafield;
+  metaComparableTo?: ShopifyMetafield;
+  metaCategory?: ShopifyMetafield;
+  metaSourcingStory?: ShopifyMetafield;
+  metaDesignStory?: ShopifyMetafield;
+  metaCraftNotes?: ShopifyMetafield;
+  metaFeatures?: ShopifyMetafield;
+  metaMaterials?: ShopifyMetafield;
+  metaDimensions?: ShopifyMetafield;
+  metaCare?: ShopifyMetafield;
+  metaLeadTime?: ShopifyMetafield;
+  metaRating?: ShopifyMetafield;
+  metaReviewCount?: ShopifyMetafield;
+  metaReviews?: ShopifyMetafield;
 };
 
 export type ShopifyCartOperation = {

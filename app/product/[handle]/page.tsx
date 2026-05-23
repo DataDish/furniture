@@ -1,7 +1,11 @@
-import { GridTileImage } from "components/grid/tile";
 import Footer from "components/layout/footer";
-import { Gallery } from "components/product/gallery";
-import { ProductDescription } from "components/product/product-description";
+import { Reveal } from "components/motion/reveal";
+import { BuyBox } from "components/product/buy-box";
+import { ProductCarousel } from "components/product/product-carousel";
+import { ProductCard } from "components/product/product-card";
+import { ProductSpecs } from "components/product/product-specs";
+import { Reviews } from "components/product/reviews";
+import { SourcingStory } from "components/product/sourcing-story";
 import { HIDDEN_PRODUCT_TAG } from "lib/constants";
 import { getProduct, getProductRecommendations } from "lib/shopify";
 import type { Image } from "lib/shopify/types";
@@ -27,23 +31,9 @@ export async function generateMetadata(props: {
     robots: {
       index: indexable,
       follow: indexable,
-      googleBot: {
-        index: indexable,
-        follow: indexable,
-      },
+      googleBot: { index: indexable, follow: indexable },
     },
-    openGraph: url
-      ? {
-          images: [
-            {
-              url,
-              width,
-              height,
-              alt,
-            },
-          ],
-        }
-      : null,
+    openGraph: url ? { images: [{ url, width, height, alt }] } : null,
   };
 }
 
@@ -61,6 +51,13 @@ export default async function ProductPage(props: {
     name: product.title,
     description: product.description,
     image: product.featuredImage.url,
+    aggregateRating: product.meta?.rating
+      ? {
+          "@type": "AggregateRating",
+          ratingValue: product.meta.rating,
+          reviewCount: product.meta.reviewCount,
+        }
+      : undefined,
     offers: {
       "@type": "AggregateOffer",
       availability: product.availableForSale
@@ -72,39 +69,64 @@ export default async function ProductPage(props: {
     },
   };
 
+  const category = product.meta?.category;
+  const categoryHandle = category?.toLowerCase();
+
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(productJsonLd),
-        }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
       />
-      <div className="mx-auto max-w-(--breakpoint-2xl) px-4">
-        <div className="flex flex-col rounded-lg border border-neutral-200 bg-white p-8 md:p-12 lg:flex-row lg:gap-8 dark:border-neutral-800 dark:bg-black">
-          <div className="h-full w-full basis-full lg:basis-4/6">
-            <Suspense
-              fallback={
-                <div className="relative aspect-square h-full max-h-[550px] w-full overflow-hidden" />
-              }
-            >
-              <Gallery
-                images={product.images.slice(0, 5).map((image: Image) => ({
-                  src: image.url,
-                  altText: image.altText,
-                }))}
-              />
-            </Suspense>
-          </div>
 
-          <div className="basis-full lg:basis-2/6">
-            <Suspense fallback={null}>
-              <ProductDescription product={product} />
-            </Suspense>
-          </div>
+      {/* Breadcrumb */}
+      <nav className="mx-auto max-w-[1400px] px-4 pt-8 lg:px-8">
+        <ol className="flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-clay">
+          <li>
+            <Link href="/" className="hover:text-ink">
+              Home
+            </Link>
+          </li>
+          <li aria-hidden>/</li>
+          {category ? (
+            <>
+              <li>
+                <Link
+                  href={`/search/${categoryHandle}`}
+                  className="hover:text-ink"
+                >
+                  {category}
+                </Link>
+              </li>
+              <li aria-hidden>/</li>
+            </>
+          ) : null}
+          <li className="text-ink">{product.title}</li>
+        </ol>
+      </nav>
+
+      {/* Gallery + buy box */}
+      <div className="mx-auto max-w-[1400px] px-4 pb-8 pt-6 lg:px-8">
+        <div className="grid items-start gap-10 lg:grid-cols-[1.5fr_1fr] lg:gap-16">
+          <ProductCarousel
+            images={product.images.map((image: Image) => ({
+              src: image.url,
+              altText: image.altText,
+            }))}
+          />
+
+          <Suspense fallback={null}>
+            <BuyBox product={product} />
+          </Suspense>
         </div>
-        <RelatedProducts id={product.id} />
       </div>
+
+      <SourcingStory product={product} />
+      <ProductSpecs product={product} />
+      <Reviews product={product} />
+
+      <RelatedProducts id={product.id} />
+
       <Footer />
     </>
   );
@@ -116,34 +138,20 @@ async function RelatedProducts({ id }: { id: string }) {
   if (!relatedProducts.length) return null;
 
   return (
-    <div className="py-8">
-      <h2 className="mb-4 text-2xl font-bold">Related Products</h2>
-      <ul className="flex w-full gap-4 overflow-x-auto pt-1">
+    <section className="mx-auto max-w-[1400px] px-4 py-20 lg:px-8 lg:py-28">
+      <Reveal className="mb-12 text-center">
+        <p className="text-xs uppercase tracking-[0.3em] text-clay">
+          You may also consider
+        </p>
+        <h2 className="mt-4 font-serif text-3xl text-ink md:text-4xl">
+          Pairs beautifully with
+        </h2>
+      </Reveal>
+      <div className="grid grid-cols-2 gap-x-5 gap-y-12 lg:grid-cols-4 lg:gap-x-6">
         {relatedProducts.map((product) => (
-          <li
-            key={product.handle}
-            className="aspect-square w-full flex-none min-[475px]:w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/5"
-          >
-            <Link
-              className="relative h-full w-full"
-              href={`/product/${product.handle}`}
-              prefetch={true}
-            >
-              <GridTileImage
-                alt={product.title}
-                label={{
-                  title: product.title,
-                  amount: product.priceRange.maxVariantPrice.amount,
-                  currencyCode: product.priceRange.maxVariantPrice.currencyCode,
-                }}
-                src={product.featuredImage?.url}
-                fill
-                sizes="(min-width: 1024px) 20vw, (min-width: 768px) 25vw, (min-width: 640px) 33vw, (min-width: 475px) 50vw, 100vw"
-              />
-            </Link>
-          </li>
+          <ProductCard key={product.handle} product={product} />
         ))}
-      </ul>
-    </div>
+      </div>
+    </section>
   );
 }

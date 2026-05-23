@@ -10,6 +10,43 @@ type Combination = {
   [key: string]: string | boolean;
 };
 
+// Map a fabric/finish color name to a representative swatch color.
+const SWATCH_MAP: Record<string, string> = {
+  "bouclé ivory": "#ece4d3",
+  "ivory bouclé": "#ece4d3",
+  bone: "#ece6d8",
+  flax: "#ddccab",
+  "washed flax": "#dccdb0",
+  "camel linen": "#c2a274",
+  "oat bouclé": "#d8ccb2",
+  sand: "#d6c29c",
+  "espresso velvet": "#463526",
+  "cognac leather": "#8a4a28",
+  "mocha bouclé": "#8a6b52",
+  "charcoal wool": "#3a3a38",
+  charcoal: "#3a3a38",
+  graphite: "#42434a",
+  "matte black": "#272727",
+  "pebble grey": "#b4afa6",
+  dove: "#cbc6bb",
+  "brushed steel": "#b7bbc0",
+  "sage bouclé": "#9aa07e",
+  olive: "#6f7257",
+};
+
+function swatchColor(value: string): string {
+  const key = value.toLowerCase();
+  if (SWATCH_MAP[key]) return SWATCH_MAP[key];
+  // Keyword fallbacks so unknown names still render sensibly.
+  if (/ivory|bone|cream|flax|oat|natural/.test(key)) return "#e6dcc7";
+  if (/black|graphite|charcoal|espresso|ebony/.test(key)) return "#2f2f2e";
+  if (/grey|gray|pebble|dove|stone|steel/.test(key)) return "#bdb8af";
+  if (/sage|olive|green|moss/.test(key)) return "#8d937a";
+  if (/camel|cognac|tan|mocha|walnut|caramel/.test(key)) return "#9c7450";
+  if (/sand|beige|wheat/.test(key)) return "#d6c29c";
+  return "#cfc4b0";
+}
+
 export function VariantSelector({
   options,
   variants,
@@ -45,62 +82,96 @@ export function VariantSelector({
     router.replace(`?${params.toString()}`, { scroll: false });
   };
 
-  return options.map((option) => (
-    <form key={option.id}>
-      <dl className="mb-8">
-        <dt className="mb-4 text-sm uppercase tracking-wide">{option.name}</dt>
-        <dd className="flex flex-wrap gap-3">
-          {option.values.map((value) => {
-            const optionNameLowerCase = option.name.toLowerCase();
+  return options.map((option) => {
+    const optionNameLowerCase = option.name.toLowerCase();
+    const isColor = optionNameLowerCase === "color";
+    const selectedValue = searchParams.get(optionNameLowerCase);
 
-            // Base option params on current searchParams so we can preserve any other param state.
-            const optionParams: Record<string, string> = {};
-            searchParams.forEach((v, k) => (optionParams[k] = v));
-            optionParams[optionNameLowerCase] = value;
+    const availabilityFor = (value: string) => {
+      const optionParams: Record<string, string> = {};
+      searchParams.forEach((v, k) => (optionParams[k] = v));
+      optionParams[optionNameLowerCase] = value;
+      const filtered = Object.entries(optionParams).filter(([key, val]) =>
+        options.find(
+          (o) => o.name.toLowerCase() === key && o.values.includes(val),
+        ),
+      );
+      return Boolean(
+        combinations.find((combination) =>
+          filtered.every(
+            ([key, val]) =>
+              combination[key] === val && combination.availableForSale,
+          ),
+        ),
+      );
+    };
 
-            // Filter out invalid options and check if the option combination is available for sale.
-            const filtered = Object.entries(optionParams).filter(
-              ([key, value]) =>
-                options.find(
-                  (option) =>
-                    option.name.toLowerCase() === key &&
-                    option.values.includes(value),
-                ),
-            );
-            const isAvailableForSale = combinations.find((combination) =>
-              filtered.every(
-                ([key, value]) =>
-                  combination[key] === value && combination.availableForSale,
-              ),
-            );
+    return (
+      <form key={option.id}>
+        <dl className="mb-7">
+          <dt className="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-clay">
+            <span>{option.name}</span>
+            {isColor && selectedValue ? (
+              <span className="normal-case tracking-normal text-ink">
+                — {selectedValue}
+              </span>
+            ) : null}
+          </dt>
+          <dd className="flex flex-wrap gap-2.5">
+            {option.values.map((value) => {
+              const isAvailableForSale = availabilityFor(value);
+              const isActive = selectedValue === value;
 
-            // The option is active if it's in the selected options.
-            const isActive = searchParams.get(optionNameLowerCase) === value;
+              if (isColor) {
+                return (
+                  <button
+                    key={value}
+                    formAction={() => updateOption(optionNameLowerCase, value)}
+                    aria-label={value}
+                    aria-disabled={!isAvailableForSale}
+                    disabled={!isAvailableForSale}
+                    title={`${value}${!isAvailableForSale ? " (Out of Stock)" : ""}`}
+                    className={clsx(
+                      "relative h-9 w-9 rounded-full border transition-all duration-200",
+                      isActive
+                        ? "border-bone ring-2 ring-ink ring-offset-1 ring-offset-bone"
+                        : "border-stone/40 hover:ring-1 hover:ring-ink hover:ring-offset-1 hover:ring-offset-bone",
+                      !isAvailableForSale && "cursor-not-allowed opacity-40",
+                    )}
+                    style={{ backgroundColor: swatchColor(value) }}
+                  >
+                    {!isAvailableForSale ? (
+                      <span className="absolute left-1/2 top-1/2 h-px w-10 -translate-x-1/2 -translate-y-1/2 -rotate-45 bg-stone" />
+                    ) : null}
+                  </button>
+                );
+              }
 
-            return (
-              <button
-                formAction={() => updateOption(optionNameLowerCase, value)}
-                key={value}
-                aria-disabled={!isAvailableForSale}
-                disabled={!isAvailableForSale}
-                title={`${option.name} ${value}${!isAvailableForSale ? " (Out of Stock)" : ""}`}
-                className={clsx(
-                  "flex min-w-[48px] items-center justify-center rounded-full border bg-neutral-100 px-2 py-1 text-sm dark:border-neutral-800 dark:bg-neutral-900",
-                  {
-                    "cursor-default ring-2 ring-blue-600": isActive,
-                    "ring-1 ring-transparent transition duration-300 ease-in-out hover:ring-blue-600":
-                      !isActive && isAvailableForSale,
-                    "relative z-10 cursor-not-allowed overflow-hidden bg-neutral-100 text-neutral-500 ring-1 ring-neutral-300 before:absolute before:inset-x-0 before:-z-10 before:h-px before:-rotate-45 before:bg-neutral-300 before:transition-transform dark:bg-neutral-900 dark:text-neutral-400 dark:ring-neutral-700 dark:before:bg-neutral-700":
-                      !isAvailableForSale,
-                  },
-                )}
-              >
-                {value}
-              </button>
-            );
-          })}
-        </dd>
-      </dl>
-    </form>
-  ));
+              return (
+                <button
+                  key={value}
+                  formAction={() => updateOption(optionNameLowerCase, value)}
+                  aria-disabled={!isAvailableForSale}
+                  disabled={!isAvailableForSale}
+                  title={`${option.name} ${value}${!isAvailableForSale ? " (Out of Stock)" : ""}`}
+                  className={clsx(
+                    "flex min-w-[52px] items-center justify-center border px-4 py-2.5 text-sm transition-all duration-200",
+                    {
+                      "cursor-default border-ink bg-ink text-bone": isActive,
+                      "border-sand bg-bone text-ink hover:border-ink":
+                        !isActive && isAvailableForSale,
+                      "relative z-10 cursor-not-allowed overflow-hidden border-sand bg-cream text-stone before:absolute before:inset-x-0 before:-z-10 before:h-px before:-rotate-12 before:bg-stone":
+                        !isAvailableForSale,
+                    },
+                  )}
+                >
+                  {value}
+                </button>
+              );
+            })}
+          </dd>
+        </dl>
+      </form>
+    );
+  });
 }

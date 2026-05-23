@@ -1,11 +1,11 @@
 "use client";
 
-import { PlusIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { addItem } from "components/cart/actions";
 import { Product, ProductVariant } from "lib/shopify/types";
 import { useSearchParams } from "next/navigation";
 import { useActionState } from "react";
+import { toast } from "sonner";
 import { useCart } from "./cart-context";
 
 function SubmitButton({
@@ -16,13 +16,13 @@ function SubmitButton({
   selectedVariantId: string | undefined;
 }) {
   const buttonClasses =
-    "relative flex w-full items-center justify-center rounded-full bg-blue-600 p-4 tracking-wide text-white";
-  const disabledClasses = "cursor-not-allowed opacity-60 hover:opacity-60";
+    "relative flex w-full items-center justify-center bg-ink px-6 py-4 text-xs font-medium uppercase tracking-[0.2em] text-bone transition-colors";
+  const disabledClasses = "cursor-not-allowed opacity-50";
 
   if (!availableForSale) {
     return (
       <button disabled className={clsx(buttonClasses, disabledClasses)}>
-        Out Of Stock
+        Sold Out
       </button>
     );
   }
@@ -34,10 +34,7 @@ function SubmitButton({
         disabled
         className={clsx(buttonClasses, disabledClasses)}
       >
-        <div className="absolute left-0 ml-4">
-          <PlusIcon className="h-5" />
-        </div>
-        Add To Cart
+        Select Options
       </button>
     );
   }
@@ -45,14 +42,9 @@ function SubmitButton({
   return (
     <button
       aria-label="Add to cart"
-      className={clsx(buttonClasses, {
-        "hover:opacity-90": true,
-      })}
+      className={clsx(buttonClasses, "hover:bg-forest")}
     >
-      <div className="absolute left-0 ml-4">
-        <PlusIcon className="h-5" />
-      </div>
-      Add To Cart
+      Add to Cart
     </button>
   );
 }
@@ -71,14 +63,17 @@ export function AddToCart({ product }: { product: Product }) {
   const defaultVariantId = variants.length === 1 ? variants[0]?.id : undefined;
   const selectedVariantId = variant?.id || defaultVariantId;
   const addItemAction = formAction.bind(null, selectedVariantId);
-  const finalVariant = variants.find(
-    (variant) => variant.id === selectedVariantId,
-  )!;
+  const finalVariant = variants.find((v) => v.id === selectedVariantId);
 
   return (
     <form
       action={async () => {
+        if (!finalVariant) return;
         addCartItem(finalVariant, product);
+        toast.success(`${product.title} added to your cart`, {
+          description:
+            finalVariant.title !== "Default" ? finalVariant.title : undefined,
+        });
         addItemAction();
       }}
     >

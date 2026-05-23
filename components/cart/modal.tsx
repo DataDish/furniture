@@ -1,8 +1,7 @@
 "use client";
 
-import clsx from "clsx";
 import { Dialog, Transition } from "@headlessui/react";
-import { ShoppingCartIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { ShoppingBagIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import LoadingDots from "components/loading-dots";
 import Price from "components/price";
 import { DEFAULT_OPTION } from "lib/constants";
@@ -63,7 +62,7 @@ export default function CartModal() {
             leaveFrom="opacity-100 backdrop-blur-[.5px]"
             leaveTo="opacity-0 backdrop-blur-none"
           >
-            <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+            <div className="fixed inset-0 bg-ink/40" aria-hidden="true" />
           </Transition.Child>
           <Transition.Child
             as={Fragment}
@@ -74,23 +73,39 @@ export default function CartModal() {
             leaveFrom="translate-x-0"
             leaveTo="translate-x-full"
           >
-            <Dialog.Panel className="fixed bottom-0 right-0 top-0 flex h-full w-full flex-col border-l border-neutral-200 bg-white/80 p-6 text-black backdrop-blur-xl md:w-[390px] dark:border-neutral-700 dark:bg-black/80 dark:text-white">
-              <div className="flex items-center justify-between">
-                <p className="text-lg font-semibold">My Cart</p>
-                <button aria-label="Close cart" onClick={closeCart}>
-                  <CloseCart />
+            <Dialog.Panel className="fixed bottom-0 right-0 top-0 flex h-full w-full flex-col border-l border-sand bg-bone p-6 text-ink md:w-[420px]">
+              <div className="flex items-center justify-between border-b border-sand pb-4">
+                <p className="font-serif text-2xl">Your Cart</p>
+                <button
+                  aria-label="Close cart"
+                  onClick={closeCart}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-sand transition-colors hover:bg-cream"
+                >
+                  <XMarkIcon className="h-5 transition-transform hover:scale-110" />
                 </button>
               </div>
 
               {!cart || cart.lines.length === 0 ? (
-                <div className="mt-20 flex w-full flex-col items-center justify-center overflow-hidden">
-                  <ShoppingCartIcon className="h-16" />
-                  <p className="mt-6 text-center text-2xl font-bold">
-                    Your cart is empty.
+                <div className="mt-24 flex w-full flex-col items-center justify-center overflow-hidden text-center">
+                  <ShoppingBagIcon
+                    className="h-14 text-stone"
+                    strokeWidth={1}
+                  />
+                  <p className="mt-6 font-serif text-2xl">Your cart is empty</p>
+                  <p className="mt-2 max-w-[24ch] text-sm text-clay">
+                    Considered pieces, sourced direct. Start with something you
+                    will keep for decades.
                   </p>
+                  <Link
+                    href="/search"
+                    onClick={closeCart}
+                    className="mt-6 border-b border-ink pb-1 text-xs font-medium uppercase tracking-[0.2em] transition-colors hover:text-clay"
+                  >
+                    Browse the collection
+                  </Link>
                 </div>
               ) : (
-                <div className="flex h-full flex-col justify-between overflow-hidden p-1">
+                <div className="flex h-full flex-col justify-between overflow-hidden">
                   <ul className="grow overflow-auto py-4">
                     {cart.lines
                       .sort((a, b) =>
@@ -119,7 +134,7 @@ export default function CartModal() {
                         return (
                           <li
                             key={i}
-                            className="flex w-full flex-col border-b border-neutral-300 dark:border-neutral-700"
+                            className="flex w-full flex-col border-b border-sand"
                           >
                             <div className="relative flex w-full flex-row justify-between px-1 py-4">
                               <div className="absolute z-40 -ml-1 -mt-2">
@@ -129,11 +144,11 @@ export default function CartModal() {
                                 />
                               </div>
                               <div className="flex flex-row">
-                                <div className="relative h-16 w-16 overflow-hidden rounded-md border border-neutral-300 bg-neutral-300 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800">
+                                <div className="relative h-20 w-20 overflow-hidden border border-sand bg-cream">
                                   <Image
                                     className="h-full w-full object-cover"
-                                    width={64}
-                                    height={64}
+                                    width={80}
+                                    height={80}
                                     alt={
                                       item.merchandise.product.featuredImage
                                         .altText ||
@@ -147,30 +162,30 @@ export default function CartModal() {
                                 <Link
                                   href={merchandiseUrl}
                                   onClick={closeCart}
-                                  className="z-30 ml-2 flex flex-row space-x-4"
+                                  className="z-30 ml-3 flex flex-row space-x-4"
                                 >
-                                  <div className="flex flex-1 flex-col text-base">
-                                    <span className="leading-tight">
+                                  <div className="flex flex-1 flex-col">
+                                    <span className="font-serif text-lg leading-tight">
                                       {item.merchandise.product.title}
                                     </span>
                                     {item.merchandise.title !==
                                     DEFAULT_OPTION ? (
-                                      <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                                      <p className="mt-1 text-xs uppercase tracking-wider text-clay">
                                         {item.merchandise.title}
                                       </p>
                                     ) : null}
                                   </div>
                                 </Link>
                               </div>
-                              <div className="flex h-16 flex-col justify-between">
+                              <div className="flex h-20 flex-col justify-between">
                                 <Price
-                                  className="flex justify-end space-y-2 text-right text-sm"
+                                  className="flex justify-end text-right text-sm"
                                   amount={item.cost.totalAmount.amount}
                                   currencyCode={
                                     item.cost.totalAmount.currencyCode
                                   }
                                 />
-                                <div className="ml-auto flex h-9 flex-row items-center rounded-full border border-neutral-200 dark:border-neutral-700">
+                                <div className="ml-auto flex h-9 flex-row items-center rounded-full border border-sand">
                                   <EditItemQuantityButton
                                     item={item}
                                     type="minus"
@@ -193,23 +208,19 @@ export default function CartModal() {
                         );
                       })}
                   </ul>
-                  <div className="py-4 text-sm text-neutral-500 dark:text-neutral-400">
-                    <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 dark:border-neutral-700">
-                      <p>Taxes</p>
-                      <Price
-                        className="text-right text-base text-black dark:text-white"
-                        amount={cart.cost.totalTaxAmount.amount}
-                        currencyCode={cart.cost.totalTaxAmount.currencyCode}
-                      />
+                  <div className="py-4 text-sm text-clay">
+                    <div className="mb-3 flex items-center justify-between border-b border-sand pb-2">
+                      <p>Shipping & assembly</p>
+                      <p className="text-right text-ink">Complimentary</p>
                     </div>
-                    <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
-                      <p>Shipping</p>
+                    <div className="mb-3 flex items-center justify-between border-b border-sand pb-2 pt-1">
+                      <p>Taxes</p>
                       <p className="text-right">Calculated at checkout</p>
                     </div>
-                    <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
-                      <p>Total</p>
+                    <div className="mb-1 flex items-center justify-between pt-1">
+                      <p className="font-serif text-lg text-ink">Total</p>
                       <Price
-                        className="text-right text-base text-black dark:text-white"
+                        className="text-right font-serif text-lg text-ink"
                         amount={cart.cost.totalAmount.amount}
                         currencyCode={cart.cost.totalAmount.currencyCode}
                       />
@@ -218,6 +229,9 @@ export default function CartModal() {
                   <form action={redirectToCheckout}>
                     <CheckoutButton />
                   </form>
+                  <p className="mt-3 text-center text-xs text-clay">
+                    100-night trial · Lifetime frame warranty
+                  </p>
                 </div>
               )}
             </Dialog.Panel>
@@ -228,29 +242,16 @@ export default function CartModal() {
   );
 }
 
-function CloseCart({ className }: { className?: string }) {
-  return (
-    <div className="relative flex h-11 w-11 items-center justify-center rounded-md border border-neutral-200 text-black transition-colors dark:border-neutral-700 dark:text-white">
-      <XMarkIcon
-        className={clsx(
-          "h-6 transition-all ease-in-out hover:scale-110",
-          className,
-        )}
-      />
-    </div>
-  );
-}
-
 function CheckoutButton() {
   const { pending } = useFormStatus();
 
   return (
     <button
-      className="block w-full rounded-full bg-blue-600 p-3 text-center text-sm font-medium text-white opacity-90 hover:opacity-100"
+      className="block w-full bg-ink py-4 text-center text-xs font-medium uppercase tracking-[0.2em] text-bone transition-colors hover:bg-forest disabled:opacity-60"
       type="submit"
       disabled={pending}
     >
-      {pending ? <LoadingDots className="bg-white" /> : "Proceed to Checkout"}
+      {pending ? <LoadingDots className="bg-bone" /> : "Proceed to Checkout"}
     </button>
   );
 }

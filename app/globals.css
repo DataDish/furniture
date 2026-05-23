@@ -3,19 +3,72 @@
 @plugin "@tailwindcss/container-queries";
 @plugin "@tailwindcss/typography";
 
+@theme {
+  /* Brand palette — Maison Noyer: warm light neutrals + deep forest green + brass */
+  --color-bone: #faf8f2;
+  --color-cream: #f3eee3;
+  --color-sand: #e8dfce;
+  --color-taupe: #dcd0b9;
+  --color-stone: #b6a98d;
+  --color-clay: #6e6d57;
+  --color-walnut: #3d4a37;
+  --color-espresso: #2a4328;
+  --color-forest: #2a4328;
+  --color-forest-deep: #1d3019;
+  --color-ink: #1b251a;
+  --color-brass: #a3854a;
+  --color-brass-soft: #c2a978;
+  --color-sage: #5f6b4e;
+
+  --font-serif: var(--font-fraunces), "Times New Roman", Georgia, serif;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+
+  --tracking-luxe: 0.22em;
+
+  --animate-marquee: marquee 50s linear infinite;
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
 @layer base {
   *,
   ::after,
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
+    border-color: var(--color-sand, currentColor);
   }
-}
 
-@media (prefers-color-scheme: dark) {
   html {
-    color-scheme: dark;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font-feature-settings: "liga" 1, "calt" 1;
+  }
+
+  ::selection {
+    background-color: var(--color-brass);
+    color: var(--color-bone);
   }
 }
 
@@ -27,6 +80,35 @@
 
 a,
 input,
-button {
-  @apply focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-50 dark:focus-visible:ring-neutral-600 dark:focus-visible:ring-offset-neutral-900;
+button,
+textarea {
+  @apply focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-bone;
+}
+
+/* High-end scroll reveal — progressively enhanced; visible by default if JS/motion absent */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Editorial display kerning */
+.font-serif {
+  letter-spacing: -0.01em;
+}
+
+/* Subtle image zoom on hover for product tiles */
+.img-hover-zoom img {
+  transition: transform 1.1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.img-hover-zoom:hover img {
+  transform: scale(1.05);
 }
