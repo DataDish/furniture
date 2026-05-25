@@ -47,7 +47,7 @@ export default async function CategoryPage(props: {
   return (
     <section>
       {/* Collection hero */}
-      <div className="relative flex h-[40vh] min-h-[300px] w-full items-end overflow-hidden bg-espresso">
+      <div className="relative flex h-[180px] w-full items-center justify-center overflow-hidden bg-espresso md:h-[230px]">
         {heroImage ? (
           <Image
             src={heroImage}
@@ -58,13 +58,13 @@ export default async function CategoryPage(props: {
             className="object-cover"
           />
         ) : null}
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/70 to-ink/10" />
-        <div className="relative mx-auto w-full max-w-[1400px] px-4 pb-10 lg:px-8">
-          <h1 className="font-serif text-4xl text-bone md:text-6xl">
+        <div className="absolute inset-0 bg-ink/55" />
+        <div className="relative mx-auto max-w-2xl px-6 text-center">
+          <h1 className="font-serif text-3xl text-bone md:text-5xl">
             {collection?.title ?? params.collection}
           </h1>
           {collection?.description ? (
-            <p className="mt-3 max-w-xl text-sm leading-relaxed text-bone/80 md:text-base">
+            <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-bone/85 md:mt-3 md:text-base">
               {collection.description}
             </p>
           ) : null}

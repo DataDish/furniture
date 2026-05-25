@@ -261,9 +261,21 @@ const reshapeProductMetafields = (
   product: ShopifyProduct,
 ): ProductMeta | undefined => {
   const reviews = metafieldJSON<ProductReview[]>(product.metaReviews);
-  let rating = metafieldNumber(product.metaRating);
-  let reviewCount = metafieldNumber(product.metaReviewCount);
 
+  // Judge.me (namespace "reviews") is the source of truth for ratings once the
+  // app is connected. `reviews.rating` serializes as
+  // {"value":"4.9","scale_min":"1.0","scale_max":"5.0"}.
+  const judgeMe = metafieldJSON<{ value?: string }>(product.metaReviewsRating);
+  const judgeMeRating = judgeMe?.value ? Number(judgeMe.value) : undefined;
+  const judgeMeCount = metafieldNumber(product.metaReviewsCount);
+
+  let rating =
+    judgeMeRating !== undefined && Number.isFinite(judgeMeRating)
+      ? judgeMeRating
+      : metafieldNumber(product.metaRating);
+  let reviewCount = judgeMeCount ?? metafieldNumber(product.metaReviewCount);
+
+  // Last resort: derive from a seeded reviews list.
   if (reviews?.length) {
     if (rating === undefined) {
       rating = Number(
@@ -329,6 +341,8 @@ const reshapeProduct = (
     metaRating,
     metaReviewCount,
     metaReviews,
+    metaReviewsRating,
+    metaReviewsCount,
     ...rest
   } = product;
 
@@ -429,17 +443,22 @@ export async function getCart(): Promise<Cart | undefined> {
     return undefined;
   }
 
-  const res = await shopifyFetch<ShopifyCartOperation>({
-    query: getCartQuery,
-    variables: { cartId },
-  });
+  try {
+    const res = await shopifyFetch<ShopifyCartOperation>({
+      query: getCartQuery,
+      variables: { cartId },
+    });
 
-  // Old carts becomes `null` when you checkout.
-  if (!res.body.data.cart) {
+    // Old carts becomes `null` when you checkout.
+    if (!res.body.data.cart) {
+      return undefined;
+    }
+
+    return reshapeCart(res.body.data.cart);
+  } catch (e) {
+    console.error(`[shopify] getCart failed; returning empty cart.`, e);
     return undefined;
   }
-
-  return reshapeCart(res.body.data.cart);
 }
 
 export async function getCollection(
@@ -453,14 +472,22 @@ export async function getCollection(
     return getLocalCollection(handle);
   }
 
-  const res = await shopifyFetch<ShopifyCollectionOperation>({
-    query: getCollectionQuery,
-    variables: {
-      handle,
-    },
-  });
+  try {
+    const res = await shopifyFetch<ShopifyCollectionOperation>({
+      query: getCollectionQuery,
+      variables: {
+        handle,
+      },
+    });
 
-  return reshapeCollection(res.body.data.collection);
+    return reshapeCollection(res.body.data.collection);
+  } catch (e) {
+    console.error(
+      `[shopify] getCollection("${handle}") failed; falling back to local.`,
+      e,
+    );
+    return getLocalCollection(handle);
+  }
 }
 
 export async function getCollectionProducts({
@@ -480,23 +507,31 @@ export async function getCollectionProducts({
     return getLocalCollectionProducts({ collection, sortKey, reverse });
   }
 
-  const res = await shopifyFetch<ShopifyCollectionProductsOperation>({
-    query: getCollectionProductsQuery,
-    variables: {
-      handle: collection,
-      reverse,
-      sortKey: sortKey === "CREATED_AT" ? "CREATED" : sortKey,
-    },
-  });
+  try {
+    const res = await shopifyFetch<ShopifyCollectionProductsOperation>({
+      query: getCollectionProductsQuery,
+      variables: {
+        handle: collection,
+        reverse,
+        sortKey: sortKey === "CREATED_AT" ? "CREATED" : sortKey,
+      },
+    });
 
-  if (!res.body.data.collection) {
-    console.log(`No collection found for \`${collection}\``);
+    if (!res.body.data.collection) {
+      console.log(`No collection found for \`${collection}\``);
+      return [];
+    }
+
+    return reshapeProducts(
+      removeEdgesAndNodes(res.body.data.collection.products),
+    );
+  } catch (e) {
+    console.error(
+      `[shopify] getCollectionProducts("${collection}") failed; returning none.`,
+      e,
+    );
     return [];
   }
-
-  return reshapeProducts(
-    removeEdgesAndNodes(res.body.data.collection.products),
-  );
 }
 
 export async function getCollections(): Promise<Collection[]> {
@@ -521,30 +556,32 @@ export async function getCollections(): Promise<Collection[]> {
     ];
   }
 
-  const res = await shopifyFetch<ShopifyCollectionsOperation>({
-    query: getCollectionsQuery,
-  });
-  const shopifyCollections = removeEdgesAndNodes(res.body?.data?.collections);
-  const collections = [
-    {
-      handle: "",
-      title: "All",
-      description: "All products",
-      seo: {
-        title: "All",
-        description: "All products",
-      },
-      path: "/search",
-      updatedAt: new Date().toISOString(),
-    },
-    // Filter out the `hidden` collections.
-    // Collections that start with `hidden-*` need to be hidden on the search page.
-    ...reshapeCollections(shopifyCollections).filter(
-      (collection) => !collection.handle.startsWith("hidden"),
-    ),
-  ];
+  const allEntry = {
+    handle: "",
+    title: "All",
+    description: "All products",
+    seo: { title: "All", description: "All products" },
+    path: "/search",
+    updatedAt: new Date().toISOString(),
+  };
 
-  return collections;
+  try {
+    const res = await shopifyFetch<ShopifyCollectionsOperation>({
+      query: getCollectionsQuery,
+    });
+    const shopifyCollections = removeEdgesAndNodes(res.body?.data?.collections);
+    return [
+      allEntry,
+      // Filter out the `hidden` collections.
+      // Collections that start with `hidden-*` need to be hidden on the search page.
+      ...reshapeCollections(shopifyCollections).filter(
+        (collection) => !collection.handle.startsWith("hidden"),
+      ),
+    ];
+  } catch (e) {
+    console.error(`[shopify] getCollections failed; falling back to local.`, e);
+    return [allEntry, ...getLocalCollections()];
+  }
 }
 
 export async function getMenu(handle: string): Promise<Menu[]> {
@@ -552,26 +589,34 @@ export async function getMenu(handle: string): Promise<Menu[]> {
   cacheTag(TAGS.collections);
   cacheLife("days");
 
+  const fallback = handle.includes("footer") ? FOOTER_MENU : NAV_MENU;
   if (!endpoint) {
-    return handle.includes("footer") ? FOOTER_MENU : NAV_MENU;
+    return fallback;
   }
 
-  const res = await shopifyFetch<ShopifyMenuOperation>({
-    query: getMenuQuery,
-    variables: {
-      handle,
-    },
-  });
+  try {
+    const res = await shopifyFetch<ShopifyMenuOperation>({
+      query: getMenuQuery,
+      variables: {
+        handle,
+      },
+    });
 
-  return (
-    res.body?.data?.menu?.items.map((item: { title: string; url: string }) => ({
-      title: item.title,
-      path: item.url
-        .replace(domain, "")
-        .replace("/collections", "/search")
-        .replace("/pages", ""),
-    })) || []
-  );
+    return (
+      res.body?.data?.menu?.items.map(
+        (item: { title: string; url: string }) => ({
+          title: item.title,
+          path: item.url
+            .replace(domain, "")
+            .replace("/collections", "/search")
+            .replace("/pages", ""),
+        }),
+      ) || []
+    );
+  } catch (e) {
+    console.error(`[shopify] getMenu("${handle}") failed; using fallback.`, e);
+    return fallback;
+  }
 }
 
 export async function getPage(handle: string): Promise<Page | undefined> {
@@ -579,12 +624,17 @@ export async function getPage(handle: string): Promise<Page | undefined> {
     return undefined;
   }
 
-  const res = await shopifyFetch<ShopifyPageOperation>({
-    query: getPageQuery,
-    variables: { handle },
-  });
+  try {
+    const res = await shopifyFetch<ShopifyPageOperation>({
+      query: getPageQuery,
+      variables: { handle },
+    });
 
-  return res.body.data.pageByHandle;
+    return res.body.data.pageByHandle;
+  } catch (e) {
+    console.error(`[shopify] getPage("${handle}") failed.`, e);
+    return undefined;
+  }
 }
 
 export async function getPages(): Promise<Page[]> {
@@ -592,11 +642,16 @@ export async function getPages(): Promise<Page[]> {
     return [];
   }
 
-  const res = await shopifyFetch<ShopifyPagesOperation>({
-    query: getPagesQuery,
-  });
+  try {
+    const res = await shopifyFetch<ShopifyPagesOperation>({
+      query: getPagesQuery,
+    });
 
-  return removeEdgesAndNodes(res.body.data.pages);
+    return removeEdgesAndNodes(res.body.data.pages);
+  } catch (e) {
+    console.error(`[shopify] getPages failed.`, e);
+    return [];
+  }
 }
 
 export async function getProduct(handle: string): Promise<Product | undefined> {
@@ -608,14 +663,22 @@ export async function getProduct(handle: string): Promise<Product | undefined> {
     return getLocalProduct(handle);
   }
 
-  const res = await shopifyFetch<ShopifyProductOperation>({
-    query: getProductQuery,
-    variables: {
-      handle,
-    },
-  });
+  try {
+    const res = await shopifyFetch<ShopifyProductOperation>({
+      query: getProductQuery,
+      variables: {
+        handle,
+      },
+    });
 
-  return reshapeProduct(res.body.data.product, false);
+    return reshapeProduct(res.body.data.product, false);
+  } catch (e) {
+    console.error(
+      `[shopify] getProduct("${handle}") failed; falling back to local catalog.`,
+      e,
+    );
+    return getLocalProduct(handle);
+  }
 }
 
 export async function getProductRecommendations(
@@ -625,20 +688,29 @@ export async function getProductRecommendations(
   cacheTag(TAGS.products);
   cacheLife("days");
 
+  // productId is our gid form when local: gid://maison-noyer/Product/<handle>
+  const localHandle = productId.split("/").pop() ?? "";
+
   if (!endpoint) {
-    // productId is our gid form: gid://maison-noyer/Product/<handle>
-    const handle = productId.split("/").pop() ?? "";
-    return getLocalRecommendations(handle);
+    return getLocalRecommendations(localHandle);
   }
 
-  const res = await shopifyFetch<ShopifyProductRecommendationsOperation>({
-    query: getProductRecommendationsQuery,
-    variables: {
-      productId,
-    },
-  });
+  try {
+    const res = await shopifyFetch<ShopifyProductRecommendationsOperation>({
+      query: getProductRecommendationsQuery,
+      variables: {
+        productId,
+      },
+    });
 
-  return reshapeProducts(res.body.data.productRecommendations);
+    return reshapeProducts(res.body.data.productRecommendations);
+  } catch (e) {
+    console.error(
+      `[shopify] getProductRecommendations failed; returning none.`,
+      e,
+    );
+    return [];
+  }
 }
 
 export async function getProducts({
@@ -658,16 +730,21 @@ export async function getProducts({
     return getLocalProducts({ query, sortKey, reverse });
   }
 
-  const res = await shopifyFetch<ShopifyProductsOperation>({
-    query: getProductsQuery,
-    variables: {
-      query,
-      reverse,
-      sortKey,
-    },
-  });
+  try {
+    const res = await shopifyFetch<ShopifyProductsOperation>({
+      query: getProductsQuery,
+      variables: {
+        query,
+        reverse,
+        sortKey,
+      },
+    });
 
-  return reshapeProducts(removeEdgesAndNodes(res.body.data.products));
+    return reshapeProducts(removeEdgesAndNodes(res.body.data.products));
+  } catch (e) {
+    console.error(`[shopify] getProducts failed; returning none.`, e);
+    return [];
+  }
 }
 
 // This is called from `app/api/revalidate.ts` so providers can control revalidation logic.

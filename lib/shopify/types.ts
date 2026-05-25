@@ -190,6 +190,9 @@ export type ShopifyProduct = {
   metaRating?: ShopifyMetafield;
   metaReviewCount?: ShopifyMetafield;
   metaReviews?: ShopifyMetafield;
+  // Judge.me / Shopify product-rating sync (namespace "reviews").
+  metaReviewsRating?: ShopifyMetafield;
+  metaReviewsCount?: ShopifyMetafield;
 };
 
 export type ShopifyCartOperation = {

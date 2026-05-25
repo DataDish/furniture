@@ -41,7 +41,7 @@ export function Hero({ image }: { image: string }) {
         </motion.p>
         <motion.h1
           {...rise(0.35)}
-          className="max-w-4xl font-serif text-5xl leading-[1.02] text-bone md:text-7xl lg:text-8xl"
+          className="max-w-3xl font-serif text-4xl leading-[1.05] text-bone md:text-5xl lg:text-6xl"
         >
           The pieces you covet.
           <br />

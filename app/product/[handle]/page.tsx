@@ -4,7 +4,7 @@ import { BuyBox } from "components/product/buy-box";
 import { ProductCarousel } from "components/product/product-carousel";
 import { ProductCard } from "components/product/product-card";
 import { ProductSpecs } from "components/product/product-specs";
-import { Reviews } from "components/product/reviews";
+import { JudgeMeReviews } from "components/product/judgeme-reviews";
 import { SourcingStory } from "components/product/sourcing-story";
 import { HIDDEN_PRODUCT_TAG } from "lib/constants";
 import { getProduct, getProductRecommendations } from "lib/shopify";
@@ -123,7 +123,7 @@ export default async function ProductPage(props: {
 
       <SourcingStory product={product} />
       <ProductSpecs product={product} />
-      <Reviews product={product} />
+      <JudgeMeReviews product={product} />
 
       <RelatedProducts id={product.id} />
 

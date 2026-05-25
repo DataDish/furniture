@@ -3,7 +3,6 @@
 import CartModal from "components/cart/modal";
 import { Wordmark } from "components/wordmark";
 import { MEGA_MENU } from "lib/data/catalog";
-import type { Menu } from "lib/shopify/types";
 import clsx from "clsx";
 import { Suspense, useEffect, useState } from "react";
 import { MegaMenu } from "./mega-menu";
@@ -16,7 +15,7 @@ const ANNOUNCEMENTS = [
   "Sourced direct from the ateliers behind the icons",
 ];
 
-export default function NavbarClient({ menu }: { menu: Menu[] }) {
+export default function NavbarClient() {
   const [scrolled, setScrolled] = useState(false);
   const [announce, setAnnounce] = useState(0);
 
@@ -35,17 +34,12 @@ export default function NavbarClient({ menu }: { menu: Menu[] }) {
     return () => clearInterval(id);
   }, []);
 
-  // Prefer the Shopify-driven menu for the mobile drawer when available.
-  const mobileMenu = menu.length
-    ? menu
-    : MEGA_MENU.map((m) => ({ title: m.title, path: m.path }));
-
   return (
     <div className="sticky top-0 z-50">
       <div className="overflow-hidden bg-ink text-bone">
         <p
           key={announce}
-          className="animate-[fadeIn_0.6s_ease] py-2 text-center text-[11px] uppercase tracking-[0.22em]"
+          className="animate-[fadeIn_0.6s_ease] px-4 py-2 text-center text-[10px] uppercase tracking-[0.18em] sm:text-[11px] sm:tracking-[0.22em]"
         >
           {ANNOUNCEMENTS[announce]}
         </p>
@@ -60,13 +54,10 @@ export default function NavbarClient({ menu }: { menu: Menu[] }) {
         )}
       >
         {/* Row 1: wordmark + utilities */}
-        <div className="mx-auto grid max-w-[1400px] grid-cols-2 items-center px-4 py-4 md:grid-cols-3 lg:px-8">
-          <div className="flex items-center md:hidden">
-            <Suspense fallback={null}>
-              <MobileMenu menu={mobileMenu} />
-            </Suspense>
+        <div className="mx-auto grid max-w-[1400px] grid-cols-[1fr_auto_1fr] items-center px-4 py-4 lg:px-8">
+          <div className="flex items-center justify-start md:hidden">
+            <MobileMenu />
           </div>
-
           <div className="hidden md:block" />
 
           <div className="flex justify-center">
@@ -83,8 +74,8 @@ export default function NavbarClient({ menu }: { menu: Menu[] }) {
           </div>
         </div>
 
-        {/* Row 2: primary nav with mega menu */}
-        <div className="border-t border-sand/60 py-3">
+        {/* Row 2: primary nav with mega menu (desktop) */}
+        <div className="hidden border-t border-sand/60 py-3 md:block">
           <MegaMenu items={MEGA_MENU} />
         </div>
       </header>

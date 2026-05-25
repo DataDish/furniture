@@ -56,66 +56,74 @@ const productFragment = /* GraphQL */ `
     }
     tags
     updatedAt
-    metaTagline: metafield(namespace: "custom", key: "tagline") {
+    metaTagline: metafield(namespace: "details", key: "tagline") {
+      value
+      type
+    }
+    metaCategory: metafield(namespace: "details", key: "category") {
+      value
+      type
+    }
+    metaDesignStory: metafield(namespace: "details", key: "design_story") {
+      value
+      type
+    }
+    metaCraftNotes: metafield(namespace: "details", key: "craft_notes") {
+      value
+      type
+    }
+    metaFeatures: metafield(namespace: "details", key: "features") {
+      value
+      type
+    }
+    metaCare: metafield(namespace: "details", key: "care") {
+      value
+      type
+    }
+    metaLeadTime: metafield(namespace: "details", key: "lead_time") {
+      value
+      type
+    }
+    metaRating: metafield(namespace: "details", key: "rating") {
+      value
+      type
+    }
+    metaReviewCount: metafield(namespace: "details", key: "review_count") {
+      value
+      type
+    }
+    metaReviews: metafield(namespace: "details", key: "reviews") {
       value
       type
     }
     metaComparableAt: metafield(
-      namespace: "custom"
+      namespace: "sourcing"
       key: "comparable_at_price"
     ) {
       value
       type
     }
-    metaComparableTo: metafield(namespace: "custom", key: "comparable_to") {
+    metaComparableTo: metafield(namespace: "sourcing", key: "comparable_to") {
       value
       type
     }
-    metaCategory: metafield(namespace: "custom", key: "category") {
+    metaSourcingStory: metafield(namespace: "sourcing", key: "story") {
       value
       type
     }
-    metaSourcingStory: metafield(namespace: "custom", key: "sourcing_story") {
+    metaMaterials: metafield(namespace: "specs", key: "materials") {
       value
       type
     }
-    metaDesignStory: metafield(namespace: "custom", key: "design_story") {
+    metaDimensions: metafield(namespace: "specs", key: "dimensions") {
       value
       type
     }
-    metaCraftNotes: metafield(namespace: "custom", key: "craft_notes") {
+    metaReviewsRating: metafield(namespace: "reviews", key: "rating") {
       value
       type
     }
-    metaFeatures: metafield(namespace: "custom", key: "features") {
-      value
-      type
-    }
-    metaMaterials: metafield(namespace: "custom", key: "materials") {
-      value
-      type
-    }
-    metaDimensions: metafield(namespace: "custom", key: "dimensions") {
-      value
-      type
-    }
-    metaCare: metafield(namespace: "custom", key: "care") {
-      value
-      type
-    }
-    metaLeadTime: metafield(namespace: "custom", key: "lead_time") {
-      value
-      type
-    }
-    metaRating: metafield(namespace: "custom", key: "rating") {
-      value
-      type
-    }
-    metaReviewCount: metafield(namespace: "custom", key: "review_count") {
-      value
-      type
-    }
-    metaReviews: metafield(namespace: "custom", key: "reviews") {
+    metaReviewsCount: metafield(namespace: "reviews", key: "rating_count") {
       value
       type
     }
