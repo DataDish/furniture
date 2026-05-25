@@ -1,5 +1,6 @@
 "use client";
 
+import { subscribeEmail } from "lib/klaviyo";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -15,6 +16,7 @@ export function Newsletter() {
           description:
             "Look out for early access to new pieces and private sales.",
         });
+        void subscribeEmail(email, "Maison Noyer — Footer Newsletter");
         setEmail("");
       }}
       className="flex w-full max-w-sm items-center border-b border-bone/30 focus-within:border-bone"

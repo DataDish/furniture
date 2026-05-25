@@ -1,8 +1,8 @@
 import { CartProvider } from "components/cart/cart-context";
 import { Navbar } from "components/layout/navbar";
-import { WelcomeToast } from "components/welcome-toast";
+import { PromoPopup } from "components/promo-popup";
 import { GeistSans } from "geist/font/sans";
-import { getCart } from "lib/shopify";
+import { getCart, getProducts } from "lib/shopify";
 import { Fraunces } from "next/font/google";
 import { ReactNode } from "react";
 import { Toaster } from "sonner";
@@ -39,16 +39,18 @@ export default async function RootLayout({
 }) {
   // Don't await the fetch, pass the Promise to the context provider
   const cart = getCart();
+  // Curated, lower-priced add-ons surfaced as cart upsells.
+  const upsells = (await getProducts({ sortKey: "PRICE" })).slice(0, 4);
 
   return (
     <html lang="en" className={`${GeistSans.variable} ${fraunces.variable}`}>
       <body className="bg-bone font-sans text-ink antialiased">
-        <CartProvider cartPromise={cart}>
+        <CartProvider cartPromise={cart} upsells={upsells}>
           <Navbar />
           <main>
             {children}
-            <Toaster closeButton />
-            <WelcomeToast />
+            <Toaster closeButton position="bottom-left" />
+            <PromoPopup />
           </main>
         </CartProvider>
       </body>

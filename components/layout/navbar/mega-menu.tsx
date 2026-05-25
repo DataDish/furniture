@@ -53,9 +53,9 @@ export function MegaMenu({ items }: { items: MegaItem[] }) {
             animate={{ opacity: 1, y: 0 }}
             exit={reduce ? undefined : { opacity: 0, y: -8 }}
             transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute left-1/2 top-full z-50 w-screen -translate-x-1/2 border-t border-sand bg-bone shadow-[0_24px_40px_-24px_rgba(27,37,26,0.35)]"
+            className="absolute inset-x-0 top-full z-50 pt-3"
           >
-            <div className="mx-auto grid max-w-[1100px] grid-cols-[1.4fr_1fr] gap-12 px-8 py-10">
+            <div className="grid grid-cols-[1.5fr_1fr] gap-12 overflow-hidden rounded-2xl bg-bone p-8 shadow-[0_24px_50px_-24px_rgba(27,37,26,0.45)] lg:gap-16 lg:p-10">
               <div className="grid grid-cols-2 gap-10">
                 {activeItem.columns!.map((col) => (
                   <div key={col.heading}>

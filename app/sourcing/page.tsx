@@ -194,7 +194,7 @@ export default function SourcingPage() {
           {[
             [
               "100-night trial",
-              "Live with your piece for 100 nights. If it's not right, we collect it — free.",
+              "Live with your piece for 100 nights. If it's not right, return it within the trial window (return shipping applies).",
             ],
             [
               "White-glove delivery",

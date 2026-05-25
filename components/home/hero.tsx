@@ -14,7 +14,7 @@ export function Hero({ image }: { image: string }) {
   });
 
   return (
-    <section className="relative h-[92vh] min-h-[640px] w-full overflow-hidden">
+    <section className="relative h-[100svh] w-full overflow-hidden">
       <motion.div
         className="absolute inset-0"
         initial={reduce ? false : { scale: 1.12 }}

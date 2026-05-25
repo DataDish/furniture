@@ -300,6 +300,9 @@ const reshapeProductMetafields = (
     craftNotes: metafieldJSON<string[]>(product.metaCraftNotes),
     materials: metafieldJSON<Spec[]>(product.metaMaterials),
     dimensions: metafieldJSON<Spec[]>(product.metaDimensions),
+    faqs: metafieldJSON<{ question: string; answer: string }[]>(
+      product.metaFaqs,
+    ),
     reviews,
     rating,
     reviewCount,
@@ -341,6 +344,7 @@ const reshapeProduct = (
     metaRating,
     metaReviewCount,
     metaReviews,
+    metaFaqs,
     metaReviewsRating,
     metaReviewsCount,
     ...rest

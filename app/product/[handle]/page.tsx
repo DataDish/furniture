@@ -1,11 +1,15 @@
 import Footer from "components/layout/footer";
 import { Reveal } from "components/motion/reveal";
 import { BuyBox } from "components/product/buy-box";
+import { LifestyleBanner } from "components/product/lifestyle-banner";
 import { ProductCarousel } from "components/product/product-carousel";
 import { ProductCard } from "components/product/product-card";
+import { ProductFaq } from "components/product/product-faq";
 import { ProductSpecs } from "components/product/product-specs";
+import { PriceTransparency } from "components/price-transparency";
 import { JudgeMeReviews } from "components/product/judgeme-reviews";
 import { SourcingStory } from "components/product/sourcing-story";
+import { StickyAddToCart } from "components/product/sticky-add-to-cart";
 import { HIDDEN_PRODUCT_TAG } from "lib/constants";
 import { getProduct, getProductRecommendations } from "lib/shopify";
 import type { Image } from "lib/shopify/types";
@@ -72,6 +76,10 @@ export default async function ProductPage(props: {
   const category = product.meta?.category;
   const categoryHandle = category?.toLowerCase();
 
+  // Use the last gallery image as the full-bleed lifestyle shot.
+  const lifestyleImage =
+    product.images[product.images.length - 1]?.url ?? product.featuredImage.url;
+
   return (
     <>
       <script
@@ -107,7 +115,7 @@ export default async function ProductPage(props: {
 
       {/* Gallery + buy box */}
       <div className="mx-auto max-w-[1400px] px-4 pb-8 pt-6 lg:px-8">
-        <div className="grid items-start gap-10 lg:grid-cols-[1.5fr_1fr] lg:gap-16">
+        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(380px,500px)] lg:gap-16">
           <ProductCarousel
             images={product.images.map((image: Image) => ({
               src: image.url,
@@ -122,12 +130,23 @@ export default async function ProductPage(props: {
       </div>
 
       <SourcingStory product={product} />
+
+      <PriceTransparency price={product.priceRange.maxVariantPrice.amount} />
+
+      <LifestyleBanner
+        src={lifestyleImage}
+        alt={`${product.title} in a Maison Noyer interior`}
+      />
+
       <ProductSpecs product={product} />
+      <ProductFaq product={product} />
       <JudgeMeReviews product={product} />
 
       <RelatedProducts id={product.id} />
 
       <Footer />
+
+      <StickyAddToCart product={product} />
     </>
   );
 }

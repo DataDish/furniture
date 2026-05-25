@@ -112,3 +112,9 @@ textarea {
 .img-hover-zoom:hover img {
   transform: scale(1.05);
 }
+
+/* Keep toasts below the cart/menus (z-50) so they never cover the checkout
+   button on desktop, and sit behind the full-screen cart on mobile. */
+[data-sonner-toaster] {
+  z-index: 40 !important;
+}

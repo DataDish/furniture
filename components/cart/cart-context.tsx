@@ -28,6 +28,7 @@ type CartAction =
 
 type CartContextType = {
   cartPromise: Promise<Cart | undefined>;
+  upsells: Product[];
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -193,12 +194,14 @@ function cartReducer(state: Cart | undefined, action: CartAction): Cart {
 export function CartProvider({
   children,
   cartPromise,
+  upsells = [],
 }: {
   children: React.ReactNode;
   cartPromise: Promise<Cart | undefined>;
+  upsells?: Product[];
 }) {
   return (
-    <CartContext.Provider value={{ cartPromise }}>
+    <CartContext.Provider value={{ cartPromise, upsells }}>
       {children}
     </CartContext.Provider>
   );
@@ -232,7 +235,8 @@ export function useCart() {
       cart: optimisticCart,
       updateCartItem,
       addCartItem,
+      upsells: context.upsells,
     }),
-    [optimisticCart],
+    [optimisticCart, context.upsells],
   );
 }

@@ -1,3 +1,8 @@
+import {
+  MoonIcon,
+  ShieldCheckIcon,
+  TruckIcon,
+} from "@heroicons/react/24/outline";
 import Link from "next/link";
 
 import { getMenu } from "lib/shopify";
@@ -21,18 +26,18 @@ const COLUMNS: { heading: string; links: { title: string; path: string }[] }[] =
       heading: "The House",
       links: [
         { title: "Our Sourcing", path: "/sourcing" },
-        { title: "Materials & Craft", path: "/sourcing" },
-        { title: "Trade Program", path: "/sourcing" },
-        { title: "Sustainability", path: "/sourcing" },
+        { title: "Custom Sourcing", path: "/custom" },
+        { title: "Materials & Craft", path: "/materials" },
+        { title: "Trade Program", path: "/trade" },
       ],
     },
     {
       heading: "Client Care",
       links: [
-        { title: "100-Night Trial", path: "/sourcing" },
-        { title: "Delivery & Assembly", path: "/sourcing" },
-        { title: "Warranty", path: "/sourcing" },
-        { title: "Contact a Specialist", path: "/sourcing" },
+        { title: "100-Night Trial", path: "/trial" },
+        { title: "Delivery & Assembly", path: "/delivery" },
+        { title: "Warranty", path: "/warranty" },
+        { title: "Contact Us", path: "/contact" },
       ],
     },
   ];
@@ -91,20 +96,38 @@ export default async function Footer() {
         </div>
 
         {/* Trust row */}
-        <div className="mt-16 grid gap-6 border-t border-bone/15 pt-10 sm:grid-cols-3">
+        <div className="mt-16 grid gap-8 border-t border-bone/15 pt-10 sm:grid-cols-3">
           {[
-            ["100-Night Trial", "Live with it. Return it if it's not right."],
             [
+              MoonIcon,
+              "100-Night Trial",
+              "Live with it for 100 nights; return it if it's not right.",
+            ],
+            [
+              TruckIcon,
               "White-Glove Delivery",
               "Placed, assembled, and packaging removed.",
             ],
-            ["Lifetime Warranty", "On every frame and joint we build."],
-          ].map(([title, body]) => (
-            <div key={title}>
-              <p className="font-serif text-lg">{title}</p>
-              <p className="mt-1 text-sm text-bone/60">{body}</p>
-            </div>
-          ))}
+            [
+              ShieldCheckIcon,
+              "Lifetime Warranty",
+              "On every frame and joint we build.",
+            ],
+          ].map(([Icon, title, body]) => {
+            const I = Icon as typeof TruckIcon;
+            return (
+              <div key={title as string} className="flex gap-4">
+                <I
+                  className="h-7 w-7 flex-none text-brass-soft"
+                  strokeWidth={1}
+                />
+                <div>
+                  <p className="font-serif text-lg">{title as string}</p>
+                  <p className="mt-1 text-sm text-bone/60">{body as string}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -115,20 +138,14 @@ export default async function Footer() {
             markup.
           </p>
           <div className="flex items-center gap-6">
-            <Link
-              href="/sourcing"
-              className="transition-colors hover:text-bone"
-            >
+            <Link href="/privacy" className="transition-colors hover:text-bone">
               Privacy
             </Link>
-            <Link
-              href="/sourcing"
-              className="transition-colors hover:text-bone"
-            >
+            <Link href="/terms" className="transition-colors hover:text-bone">
               Terms
             </Link>
             <Link
-              href="/sourcing"
+              href="/accessibility"
               className="transition-colors hover:text-bone"
             >
               Accessibility

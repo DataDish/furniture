@@ -169,6 +169,15 @@ export default function MobileMenu() {
                     );
                   })}
                 </ul>
+
+                <Link
+                  href="/account"
+                  prefetch={true}
+                  onClick={closeMobileMenu}
+                  className="mt-6 inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-clay transition-colors hover:text-ink"
+                >
+                  Sign in / Account
+                </Link>
               </div>
             </Dialog.Panel>
           </Transition.Child>

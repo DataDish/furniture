@@ -1,9 +1,17 @@
+import {
+  ReceiptPercentIcon,
+  SparklesIcon,
+  MoonIcon,
+  TruckIcon,
+} from "@heroicons/react/24/outline";
 import { Hero } from "components/home/hero";
+import { CaseInPoint } from "components/home/case-in-point";
+import { CovetedCarousel } from "components/home/coveted-carousel";
 import Footer from "components/layout/footer";
+import { PriceTransparency } from "components/price-transparency";
 import { Reveal, RevealGroup, RevealItem } from "components/motion/reveal";
-import { ProductCard } from "components/product/product-card";
 import { collectionHero, img } from "lib/data/catalog";
-import { getProduct, getProducts } from "lib/shopify";
+import { getProducts } from "lib/shopify";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -13,23 +21,39 @@ export const metadata = {
   openGraph: { type: "website" },
 };
 
-const usd0 = (n: string | number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(Number(n));
-
 const CATEGORIES = [
-  { handle: "living", title: "Living", copy: "Sofas & lounge" },
-  { handle: "dining", title: "Dining", copy: "Tables & seating" },
-  { handle: "bedroom", title: "Bedroom", copy: "Beds & rest" },
-  { handle: "lighting", title: "Lighting", copy: "Sculptural light" },
+  {
+    handle: "living",
+    title: "Living",
+    copy: "Sofas, lounge chairs & occasional",
+    span: "lg:col-span-6 lg:row-span-2",
+  },
+  {
+    handle: "dining",
+    title: "Dining",
+    copy: "Tables & seating",
+    span: "lg:col-span-6",
+  },
+  {
+    handle: "bedroom",
+    title: "Bedroom",
+    copy: "Beds & rest",
+    span: "lg:col-span-3",
+  },
+  {
+    handle: "lighting",
+    title: "Lighting",
+    copy: "Sculptural light",
+    span: "lg:col-span-3",
+  },
 ];
 
 export default async function HomePage() {
-  const coveted = (await getProducts({ sortKey: "BEST_SELLING" })).slice(0, 8);
-  const spotlight = await getProduct("lina-modular-sofa");
+  const all = await getProducts({ sortKey: "BEST_SELLING" });
+  const coveted = all.slice(0, 8);
+  const cases = all
+    .filter((p) => p.meta?.comparableAt && p.meta?.sourcingStory)
+    .slice(0, 6);
 
   return (
     <>
@@ -37,128 +61,94 @@ export default async function HomePage() {
 
       {/* Brand promise strip */}
       <section className="border-b border-sand bg-cream">
-        <div className="mx-auto grid max-w-[1400px] grid-cols-2 divide-x divide-sand px-4 md:grid-cols-4 lg:px-8">
+        <div className="mx-auto grid max-w-[1400px] grid-cols-2 divide-x divide-y divide-sand px-4 md:grid-cols-4 md:divide-y-0 lg:px-8">
           {[
-            ["Up to 70% less", "than the traditional retail price"],
-            ["The same ateliers", "that supply the design houses"],
-            ["100-night trial", "live with it before you commit"],
-            ["White-glove delivery", "placed, assembled, complimentary"],
-          ].map(([title, body]) => (
-            <div key={title} className="px-4 py-7 text-center">
-              <p className="font-serif text-lg text-ink md:text-xl">{title}</p>
-              <p className="mt-1 text-xs leading-relaxed text-clay">{body}</p>
-            </div>
-          ))}
+            [
+              ReceiptPercentIcon,
+              "Up to 70% less",
+              "than the traditional retail price",
+            ],
+            [
+              SparklesIcon,
+              "The same ateliers",
+              "that supply the design houses",
+            ],
+            [MoonIcon, "100-night trial", "live with it before you commit"],
+            [
+              TruckIcon,
+              "White-glove delivery",
+              "placed, assembled, complimentary",
+            ],
+          ].map(([Icon, title, body]) => {
+            const I = Icon as typeof TruckIcon;
+            return (
+              <div
+                key={title as string}
+                className="flex flex-col items-center px-4 py-8 text-center"
+              >
+                <I className="h-7 w-7 text-brass" strokeWidth={1} />
+                <p className="mt-3 font-serif text-lg text-ink md:text-xl">
+                  {title as string}
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-clay">
+                  {body as string}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </section>
 
       {/* The difference — the sourcing thesis */}
-      <section className="mx-auto max-w-[1400px] px-4 py-24 lg:px-8 lg:py-36">
-        <div className="grid gap-x-12 gap-y-14 lg:grid-cols-12">
-          <Reveal className="lg:col-span-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-clay">
-              The Maison Noyer Difference
-            </p>
-            <h2 className="mt-6 font-serif text-4xl leading-[1.08] text-ink md:text-[3.25rem]">
-              High design is not
-              <br className="hidden md:block" /> the same as a high price.
-            </h2>
-            <p className="mt-7 max-w-md text-base leading-relaxed text-walnut">
-              The furniture in design galleries is rarely made by the gallery.
-              It is made by specialist ateliers, then marked up three to five
-              times for the name on the tag. We keep the craft and remove the
-              rest.
-            </p>
-          </Reveal>
+      <section className="mx-auto max-w-[1400px] px-4 py-24 lg:px-8 lg:py-32">
+        <Reveal className="mx-auto max-w-3xl text-center">
+          <p className="text-xs uppercase tracking-[0.3em] text-clay">
+            The Maison Noyer Difference
+          </p>
+          <h2 className="mx-auto mt-6 max-w-2xl font-serif text-4xl leading-[1.1] text-ink md:text-[3.25rem]">
+            High design is not the same as a high price.
+          </h2>
+          <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-walnut">
+            Galleries rarely make their own furniture. We go straight to the
+            makers, and skip the markup.
+          </p>
+        </Reveal>
 
-          <div className="lg:col-span-6 lg:col-start-7">
-            <RevealGroup className="flex flex-col">
-              {[
-                [
-                  "Direct from the atelier",
-                  "We commission from the same family workshops in Italy, Portugal, and Vietnam that produce for the celebrated houses. No licensing, no showroom, no reseller.",
-                ],
-                [
-                  "The same materials",
-                  "Belgian linen by the bolt. Genuine Carrara marble from the quarry basin. Solid FSC oak from the mill. The exact specifications, never the cheaper substitute.",
-                ],
-                [
-                  "None of the markup",
-                  "You pay for the materials and the labor, the things that make a piece worth owning, and nothing for the four layers of distribution in between.",
-                ],
-              ].map(([title, body], i) => (
-                <RevealItem key={title}>
-                  <div className="flex gap-6 border-t border-stone/40 py-7 first:pt-0 first:border-t-0">
-                    <span className="mt-1 font-serif text-sm text-brass">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <div>
-                      <h3 className="font-serif text-2xl text-ink">{title}</h3>
-                      <p className="mt-2 max-w-md text-sm leading-relaxed text-walnut">
-                        {body}
-                      </p>
-                    </div>
-                  </div>
-                </RevealItem>
-              ))}
-            </RevealGroup>
-          </div>
-        </div>
+        <RevealGroup className="mt-16 grid gap-x-10 gap-y-12 sm:grid-cols-3 lg:mt-20">
+          {[
+            [
+              "Direct from the atelier",
+              "The same workshops that supply the design houses.",
+            ],
+            [
+              "The same materials",
+              "Belgian linen, Carrara marble, solid oak — no substitutes.",
+            ],
+            [
+              "None of the markup",
+              "You pay for the craft, not the name on the tag.",
+            ],
+          ].map(([title, body], i) => (
+            <RevealItem key={title}>
+              <div className="border-t border-stone/40 pt-6">
+                <span className="font-serif text-2xl text-brass">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <h3 className="mt-4 font-serif text-xl text-ink">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-walnut">
+                  {body}
+                </p>
+              </div>
+            </RevealItem>
+          ))}
+        </RevealGroup>
       </section>
 
-      {/* Spotlight price comparison */}
-      {spotlight ? (
-        <section className="bg-espresso text-bone">
-          <div className="mx-auto grid max-w-[1400px] items-stretch lg:grid-cols-2">
-            <div className="relative min-h-[480px] overflow-hidden">
-              <Image
-                src={spotlight.images[1]?.url ?? spotlight.featuredImage.url}
-                alt={spotlight.title}
-                fill
-                sizes="(min-width: 1024px) 50vw, 100vw"
-                className="object-cover"
-              />
-            </div>
-            <Reveal className="flex flex-col justify-center px-4 py-16 lg:px-16 lg:py-24">
-              <p className="text-xs uppercase tracking-[0.3em] text-brass-soft">
-                Case in point
-              </p>
-              <h2 className="mt-5 font-serif text-4xl leading-tight md:text-5xl">
-                {spotlight.title}
-              </h2>
-              <p className="mt-5 max-w-md text-sm leading-relaxed text-bone/75">
-                {spotlight.meta?.sourcingStory}
-              </p>
+      {/* Case in point — scrollable price comparisons */}
+      <CaseInPoint products={cases} />
 
-              <div className="mt-10 flex items-end gap-10">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-bone/50">
-                    Traditional retail
-                  </p>
-                  <p className="mt-2 font-serif text-3xl text-bone/50 line-through">
-                    {usd0(spotlight.meta?.comparableAt?.amount ?? 0)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-brass-soft">
-                    Maison Noyer
-                  </p>
-                  <p className="mt-2 font-serif text-5xl">
-                    {usd0(spotlight.priceRange.maxVariantPrice.amount)}
-                  </p>
-                </div>
-              </div>
-
-              <Link
-                href={`/product/${spotlight.handle}`}
-                className="mt-10 inline-block w-max bg-bone px-8 py-4 text-xs font-medium uppercase tracking-[0.2em] text-ink transition-colors hover:bg-cream"
-              >
-                View the Lina Sofa
-              </Link>
-            </Reveal>
-          </div>
-        </section>
-      ) : null}
+      {/* Honest pricing breakdown */}
+      <PriceTransparency />
 
       {/* Shop by category */}
       <section className="mx-auto max-w-[1400px] px-4 py-24 lg:px-8 lg:py-32">
@@ -179,12 +169,15 @@ export default async function HomePage() {
           </Link>
         </Reveal>
 
-        <RevealGroup className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
+        <RevealGroup className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:auto-rows-[270px] lg:grid-cols-12 lg:gap-5">
           {CATEGORIES.map((cat) => (
-            <RevealItem key={cat.handle}>
+            <RevealItem
+              key={cat.handle}
+              className={`min-h-[320px] lg:min-h-0 ${cat.span}`}
+            >
               <Link
                 href={`/search/${cat.handle}`}
-                className="img-hover-zoom group relative block aspect-[3/4] overflow-hidden bg-cream"
+                className="img-hover-zoom group relative block h-full w-full overflow-hidden bg-cream"
               >
                 <Image
                   src={
@@ -193,17 +186,24 @@ export default async function HomePage() {
                   }
                   alt={cat.title}
                   fill
-                  sizes="(min-width: 1024px) 25vw, 50vw"
+                  sizes="(min-width: 1024px) 50vw, 100vw"
                   className="object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-ink/60 to-transparent" />
-                <div className="absolute bottom-0 left-0 p-5">
-                  <p className="text-[10px] uppercase tracking-[0.22em] text-bone/70">
+                <div className="absolute inset-0 bg-gradient-to-t from-ink/75 via-ink/15 to-transparent" />
+                <div className="pointer-events-none absolute inset-3 border border-bone/25" />
+                <div className="absolute inset-x-0 bottom-0 p-6 lg:p-7">
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-bone/70">
                     {cat.copy}
                   </p>
-                  <p className="mt-1 font-serif text-2xl text-bone">
+                  <h3 className="mt-1.5 font-serif text-3xl text-bone lg:text-4xl">
                     {cat.title}
-                  </p>
+                  </h3>
+                  <span className="mt-3 inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-bone">
+                    Explore
+                    <span className="transition-transform duration-300 group-hover:translate-x-1.5">
+                      →
+                    </span>
+                  </span>
                 </div>
               </Link>
             </RevealItem>
@@ -211,27 +211,25 @@ export default async function HomePage() {
         </RevealGroup>
       </section>
 
-      {/* Most coveted grid */}
+      {/* Most coveted — horizontal carousel */}
       <section className="bg-cream py-24 lg:py-32">
         <div className="mx-auto max-w-[1400px] px-4 lg:px-8">
-          <Reveal className="mb-12 text-center">
-            <p className="text-xs uppercase tracking-[0.3em] text-clay">
-              Most Coveted
+          <Reveal className="mb-12 flex items-end justify-between gap-6">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-clay">
+                Most Coveted
+              </p>
+              <h2 className="mt-4 font-serif text-4xl text-ink md:text-5xl">
+                The pieces our clients live with
+              </h2>
+            </div>
+            <p className="hidden shrink-0 pb-1 text-xs uppercase tracking-[0.18em] text-clay sm:block">
+              Scroll to explore →
             </p>
-            <h2 className="mt-4 font-serif text-4xl text-ink md:text-5xl">
-              The pieces our clients live with
-            </h2>
           </Reveal>
-          <RevealGroup
-            className="grid grid-cols-2 gap-x-5 gap-y-12 lg:grid-cols-4 lg:gap-x-6"
-            stagger={0.06}
-          >
-            {coveted.map((product, i) => (
-              <RevealItem key={product.handle}>
-                <ProductCard product={product} priority={i < 4} />
-              </RevealItem>
-            ))}
-          </RevealGroup>
+          <Reveal>
+            <CovetedCarousel products={coveted} />
+          </Reveal>
         </div>
       </section>
 
@@ -282,62 +280,71 @@ export default async function HomePage() {
         </Reveal>
       </section>
 
-      {/* Credibility — a lead voice, a stat band, then supporting voices */}
+      {/* Why clients trust us — editorial split, image on the opposite side */}
       <section className="bg-espresso py-24 text-bone lg:py-32">
-        <div className="mx-auto max-w-[1400px] px-4 lg:px-8">
-          <Reveal className="max-w-4xl">
+        <div className="mx-auto grid max-w-[1400px] items-center gap-12 px-4 lg:grid-cols-2 lg:gap-20 lg:px-8">
+          <Reveal className="order-1">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="relative mt-10 aspect-[3/4] overflow-hidden bg-forest-deep">
+                <Image
+                  src={img("1583847268964-b28dc8f51f92", 800)}
+                  alt="A client's living room"
+                  fill
+                  sizes="(min-width: 1024px) 25vw, 50vw"
+                  className="object-cover"
+                />
+              </div>
+              <div className="relative aspect-[3/4] overflow-hidden bg-forest-deep">
+                <Image
+                  src={img("1615875605825-5eb9bb5d52ac", 800)}
+                  alt="A Maison Noyer interior"
+                  fill
+                  sizes="(min-width: 1024px) 25vw, 50vw"
+                  className="object-cover"
+                />
+              </div>
+            </div>
+          </Reveal>
+
+          <Reveal delay={0.1} className="order-2">
             <p className="text-xs uppercase tracking-[0.3em] text-brass-soft">
               Why clients trust us
             </p>
-            <blockquote className="mt-7 font-serif text-3xl leading-[1.25] text-bone md:text-[2.6rem]">
+            <h2 className="mt-5 font-serif text-4xl leading-tight md:text-5xl">
+              Loved by the people who live with it.
+            </h2>
+            <blockquote className="mt-6 font-serif text-2xl leading-snug text-bone/90">
               &ldquo;We sat on the $9,800 version the same week ours arrived.
               Honestly, we could not tell them apart.&rdquo;
             </blockquote>
-            <figcaption className="mt-6 text-xs uppercase tracking-[0.2em] text-bone/55">
+            <p className="mt-4 text-xs uppercase tracking-[0.2em] text-bone/55">
               Eleanor V. — Greenwich, CT · Verified buyer
-            </figcaption>
+            </p>
+
+            <div className="mt-8 grid grid-cols-3 gap-4 border-t border-bone/15 pt-6">
+              {[
+                ["4.9/5", "2,400+ reviews"],
+                ["18,000+", "rooms furnished"],
+                ["100 nights", "to decide at home"],
+              ].map(([stat, label]) => (
+                <div key={stat}>
+                  <p className="font-serif text-2xl text-bone md:text-3xl">
+                    {stat}
+                  </p>
+                  <p className="mt-1 text-[11px] leading-tight text-bone/55">
+                    {label}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <Link
+              href="/sourcing"
+              className="mt-9 inline-block border-b border-bone pb-1 text-xs font-medium uppercase tracking-[0.2em] text-bone transition-colors hover:text-brass-soft"
+            >
+              Inside our client care
+            </Link>
           </Reveal>
-
-          <div className="mt-16 grid grid-cols-1 border-y border-bone/15 sm:grid-cols-3 sm:divide-x sm:divide-bone/15">
-            {[
-              ["4.9 / 5", "across 2,400+ verified reviews"],
-              ["18,000+", "rooms furnished, and counting"],
-              ["100 nights", "to decide, or we collect it free"],
-            ].map(([stat, label]) => (
-              <div key={stat} className="py-8 sm:px-8 sm:first:pl-0">
-                <p className="font-serif text-4xl text-bone md:text-5xl">
-                  {stat}
-                </p>
-                <p className="mt-2 text-sm text-bone/55">{label}</p>
-              </div>
-            ))}
-          </div>
-
-          <RevealGroup className="mt-14 grid gap-10 md:grid-cols-2 lg:gap-16">
-            {[
-              [
-                "Real marble, real weight, real oak. I checked the end grain — it is the genuine thing all the way through.",
-                "Yuki T.",
-                "San Francisco, CA",
-              ],
-              [
-                "The delivery team assembled everything and took the packaging. The luxury experience, at a quarter of the price.",
-                "Marcus D.",
-                "Austin, TX",
-              ],
-            ].map(([quote, name, place]) => (
-              <RevealItem key={name}>
-                <figure>
-                  <blockquote className="font-serif text-xl leading-relaxed text-bone/85">
-                    &ldquo;{quote}&rdquo;
-                  </blockquote>
-                  <figcaption className="mt-5 text-xs uppercase tracking-[0.2em] text-bone/50">
-                    {name} — {place}
-                  </figcaption>
-                </figure>
-              </RevealItem>
-            ))}
-          </RevealGroup>
         </div>
       </section>
 

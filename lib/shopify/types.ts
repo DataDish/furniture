@@ -107,6 +107,7 @@ export type ProductMeta = {
   rating?: number;
   reviewCount?: number;
   reviews?: ProductReview[];
+  faqs?: { question: string; answer: string }[];
 };
 
 export type ProductOption = {
@@ -190,6 +191,7 @@ export type ShopifyProduct = {
   metaRating?: ShopifyMetafield;
   metaReviewCount?: ShopifyMetafield;
   metaReviews?: ShopifyMetafield;
+  metaFaqs?: ShopifyMetafield;
   // Judge.me / Shopify product-rating sync (namespace "reviews").
   metaReviewsRating?: ShopifyMetafield;
   metaReviewsCount?: ShopifyMetafield;

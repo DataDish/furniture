@@ -7,6 +7,7 @@ import { AddToCart } from "components/cart/add-to-cart";
 import { Product } from "lib/shopify/types";
 import Link from "next/link";
 import { Accordion, type AccordionItem } from "./accordion";
+import { ShopPayInstallments } from "./shop-pay-installments";
 import { Stars } from "./stars";
 import { VariantSelector } from "./variant-selector";
 
@@ -97,7 +98,8 @@ export function BuyBox({ product }: { product: Product }) {
         </p>
         <p>
           {meta?.leadTime ?? "Ships within 1–2 weeks"}. 100-night in-home trial
-          — if it isn’t right, we collect it free of charge.
+          — if it isn’t right, we'll arrange the return to our US warehouse
+          (return shipping is the customer's cost).
         </p>
       </div>
     ),
@@ -167,6 +169,8 @@ export function BuyBox({ product }: { product: Product }) {
       <div className="mt-2">
         <AddToCart product={product} />
       </div>
+
+      <ShopPayInstallments product={product} />
 
       {meta?.leadTime ? (
         <p className="mt-4 text-center text-xs uppercase tracking-[0.15em] text-clay">

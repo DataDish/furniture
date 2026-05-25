@@ -12,6 +12,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { createCartAndSetCookie, redirectToCheckout } from "./actions";
 import { useCart } from "./cart-context";
+import { CartUpsells } from "./cart-upsells";
 import { DeleteItemButton } from "./delete-item-button";
 import { EditItemQuantityButton } from "./edit-item-quantity-button";
 import OpenCart from "./open-cart";
@@ -208,6 +209,9 @@ export default function CartModal() {
                         );
                       })}
                   </ul>
+
+                  <CartUpsells />
+
                   <div className="py-4 text-sm text-clay">
                     <div className="mb-3 flex items-center justify-between border-b border-sand pb-2">
                       <p>Shipping & assembly</p>

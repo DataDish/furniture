@@ -96,6 +96,10 @@ const productFragment = /* GraphQL */ `
       value
       type
     }
+    metaFaqs: metafield(namespace: "details", key: "faqs") {
+      value
+      type
+    }
     metaComparableAt: metafield(
       namespace: "sourcing"
       key: "comparable_at_price"
