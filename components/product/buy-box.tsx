@@ -1,4 +1,5 @@
 import {
+  ChatBubbleLeftRightIcon,
   HomeModernIcon,
   ShieldCheckIcon,
   TruckIcon,
@@ -76,34 +77,8 @@ export function BuyBox({ product }: { product: Product }) {
       content: <SpecList rows={meta.materials} />,
     });
   }
-  if (meta?.dimensions?.length) {
-    accordion.push({
-      title: "Dimensions & Sizing",
-      content: <SpecList rows={meta.dimensions} />,
-    });
-  }
-  if (meta?.care) {
-    accordion.push({
-      title: "Care & Maintenance",
-      content: <p>{meta.care}</p>,
-    });
-  }
-  accordion.push({
-    title: "Shipping & Returns",
-    content: (
-      <div className="space-y-2">
-        <p>
-          Complimentary white-glove delivery: we place and assemble your piece
-          and remove all packaging.
-        </p>
-        <p>
-          {meta?.leadTime ?? "Ships within 1–2 weeks"}. 100-night in-home trial
-          — if it isn’t right, we'll arrange the return to our US warehouse
-          (return shipping is the customer's cost).
-        </p>
-      </div>
-    ),
-  });
+  // Dimensions, care, and delivery/returns now live in the tabbed section
+  // below the fold (ProductTabs).
 
   return (
     <div>
@@ -178,35 +153,62 @@ export function BuyBox({ product }: { product: Product }) {
         </p>
       ) : null}
 
-      <ul className="mt-7 grid grid-cols-3 gap-3 border-t border-sand pt-7 text-center">
-        {[
-          [TruckIcon, "Free white-glove delivery"],
-          [HomeModernIcon, "100-night home trial"],
-          [ShieldCheckIcon, "Lifetime frame warranty"],
-        ].map(([Icon, label], i) => {
-          const I = Icon as typeof TruckIcon;
-          return (
-            <li key={i} className="flex flex-col items-center gap-2">
-              <I className="h-6 w-6 text-clay" strokeWidth={1} />
-              <span className="text-[11px] leading-tight text-walnut">
-                {label as string}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
-
-      {/* Expandable detail sections */}
-      <div className="mt-8">
-        <Accordion items={accordion} />
+      {/* Our Promises */}
+      <div className="mt-7 border-t border-sand pt-7">
+        <p className="mb-4 text-center text-xs uppercase tracking-[0.25em] text-clay">
+          Our Promises
+        </p>
+        <ul className="grid grid-cols-3 gap-3 text-center">
+          {[
+            [TruckIcon, "Free white-glove delivery"],
+            [HomeModernIcon, "100-night home trial"],
+            [ShieldCheckIcon, "Lifetime frame warranty"],
+          ].map(([Icon, label], i) => {
+            const I = Icon as typeof TruckIcon;
+            return (
+              <li key={i} className="flex flex-col items-center gap-2">
+                <I className="h-6 w-6 text-clay" strokeWidth={1} />
+                <span className="text-[11px] leading-tight text-walnut">
+                  {label as string}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
       </div>
 
-      <p className="mt-6 text-center text-xs text-clay">
-        Questions before you commit?{" "}
-        <Link href="/sourcing" className="border-b border-clay hover:text-ink">
-          Speak with a furniture specialist
-        </Link>
-      </p>
+      {/* Concierge / design specialist */}
+      <div className="mt-6 flex items-start gap-4 border border-sand bg-cream p-5">
+        <ChatBubbleLeftRightIcon
+          className="h-7 w-7 flex-none text-brass"
+          strokeWidth={1}
+        />
+        <div>
+          <p className="text-xs uppercase tracking-[0.22em] text-clay">
+            Concierge service
+          </p>
+          <p className="mt-1 font-serif text-lg text-ink">
+            Talk to a design specialist
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-walnut">
+            Unsure about finishes, sizing, or how this piece works in your room?
+            Speak one-on-one with a specialist who knows the collection.
+          </p>
+          <Link
+            href="/contact"
+            className="mt-3 inline-block border-b border-ink pb-0.5 text-xs font-medium uppercase tracking-[0.2em] text-ink transition-colors hover:text-clay"
+          >
+            Book a design consult
+          </Link>
+        </div>
+      </div>
+
+      {/* Expandable detail sections */}
+      {accordion.length ? (
+        <div className="mt-8">
+          <Accordion items={accordion} />
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -4,8 +4,10 @@ import { BuyBox } from "components/product/buy-box";
 import { LifestyleBanner } from "components/product/lifestyle-banner";
 import { ProductCarousel } from "components/product/product-carousel";
 import { ProductCard } from "components/product/product-card";
+import { ProductComparison } from "components/product/product-comparison";
 import { ProductFaq } from "components/product/product-faq";
 import { ProductSpecs } from "components/product/product-specs";
+import { ProductTabs } from "components/product/product-tabs";
 import { PriceTransparency } from "components/price-transparency";
 import { JudgeMeReviews } from "components/product/judgeme-reviews";
 import { SourcingStory } from "components/product/sourcing-story";
@@ -131,6 +133,8 @@ export default async function ProductPage(props: {
 
       <SourcingStory product={product} />
 
+      <ProductComparison product={product} />
+
       <PriceTransparency price={product.priceRange.maxVariantPrice.amount} />
 
       <LifestyleBanner
@@ -139,6 +143,7 @@ export default async function ProductPage(props: {
       />
 
       <ProductSpecs product={product} />
+      <ProductTabs product={product} />
       <ProductFaq product={product} />
       <JudgeMeReviews product={product} />
 

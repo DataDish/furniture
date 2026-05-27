@@ -64,6 +64,8 @@ definition also grants Storefront API read access automatically.
 | `review_count` | Integer | Review count (fallback) |
 | `reviews` | JSON | Built-in reviews list (fallback when Judge.me is off) |
 | `faqs` | JSON | Overrides the default PDP FAQ list for this product |
+| `comparison` | JSON | Overrides the "vs. the alternatives" comparison table |
+| `tear_sheet` | URL | Link to a downloadable spec/tear-sheet PDF (shown in the product tabs) |
 
 ### Namespace `sourcing`
 

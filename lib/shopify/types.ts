@@ -108,6 +108,15 @@ export type ProductMeta = {
   reviewCount?: number;
   reviews?: ProductReview[];
   faqs?: { question: string; answer: string }[];
+  comparison?: ComparisonRow[];
+  tearSheet?: string;
+};
+
+export type ComparisonRow = {
+  feature: string;
+  us: boolean | string;
+  original: boolean | string;
+  mass: boolean | string;
 };
 
 export type ProductOption = {
@@ -192,6 +201,8 @@ export type ShopifyProduct = {
   metaReviewCount?: ShopifyMetafield;
   metaReviews?: ShopifyMetafield;
   metaFaqs?: ShopifyMetafield;
+  metaComparison?: ShopifyMetafield;
+  metaTearSheet?: ShopifyMetafield;
   // Judge.me / Shopify product-rating sync (namespace "reviews").
   metaReviewsRating?: ShopifyMetafield;
   metaReviewsCount?: ShopifyMetafield;

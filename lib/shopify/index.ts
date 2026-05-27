@@ -303,6 +303,10 @@ const reshapeProductMetafields = (
     faqs: metafieldJSON<{ question: string; answer: string }[]>(
       product.metaFaqs,
     ),
+    comparison: metafieldJSON<ProductMeta["comparison"]>(
+      product.metaComparison,
+    ),
+    tearSheet: metafieldText(product.metaTearSheet),
     reviews,
     rating,
     reviewCount,
@@ -345,6 +349,8 @@ const reshapeProduct = (
     metaReviewCount,
     metaReviews,
     metaFaqs,
+    metaComparison,
+    metaTearSheet,
     metaReviewsRating,
     metaReviewsCount,
     ...rest
